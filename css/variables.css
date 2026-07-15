@@ -1,0 +1,101 @@
+/* ============================================================
+   Design tokens. Every color/spacing/radius value used anywhere
+   in the dashboard should trace back to a variable defined here —
+   this is what makes theming and future restyling a one-file edit.
+   ============================================================ */
+
+:root {
+  /* ---- Brand palette (matches the V1–V3 Word/Excel documents) ---- */
+  --navy: #1f3864;
+  --navy-light: #2c4a80;
+  --gold: #b8860b;
+  --gold-light: #d4a017;
+
+  /* ---- Light theme (default) ---- */
+  --bg: #f7f8fa;
+  --bg-elevated: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-hover: #eef1f6;
+  --bg-active: #e8edf7;
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-muted: #6b7280;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e0;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.14);
+  --accent: var(--navy);
+  --accent-soft: #e8edf7;
+  --focus-ring: #2563eb;
+
+  /* ---- Semantic colors (status / difficulty / quality / health) ---- */
+  --c-green: #1b7f3a;
+  --c-green-soft: #e6f4ea;
+  --c-blue: #1d4ed8;
+  --c-blue-soft: #e8effe;
+  --c-amber: #b8860b;
+  --c-amber-soft: #fdf3d8;
+  --c-red: #b91c1c;
+  --c-red-soft: #fbe9e9;
+  --c-grey: #6b7280;
+  --c-grey-soft: #eef0f2;
+
+  /* ---- Spacing scale ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* ---- Radius / typography ---- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* ---- Layout ---- */
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 68px;
+  --header-height: 64px;
+  --transition-fast: 120ms ease;
+  --transition-base: 200ms ease;
+}
+
+/* ---- Dark theme overrides. Toggled via [data-theme="dark"] on <html>. ---- */
+[data-theme="dark"] {
+  --bg: #0f1420;
+  --bg-elevated: #171d2b;
+  --bg-sidebar: #12172400;
+  --bg-sidebar: #141a28;
+  --bg-hover: #1e2534;
+  --bg-active: #232b3d;
+  --text-primary: #e7ebf3;
+  --text-secondary: #a9b3c6;
+  --text-muted: #7c869c;
+  --border: #263049;
+  --border-strong: #33405e;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --accent: #6f95d6;
+  --accent-soft: #1c2740;
+  --focus-ring: #6f95d6;
+
+  --c-green-soft: #123322;
+  --c-blue-soft: #16233f;
+  --c-amber-soft: #3a2e10;
+  --c-red-soft: #3a1616;
+  --c-grey-soft: #202737;
+}
+
+/* ---- High-contrast mode (accessibility toggle) ---- */
+[data-contrast="high"] {
+  --border: var(--border-strong);
+  --text-secondary: var(--text-primary);
+  --text-muted: var(--text-primary);
+}

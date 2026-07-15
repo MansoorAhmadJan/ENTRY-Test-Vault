@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entry-Test Knowledge Vault — Dashboard</title>
+    <meta
+      name="description"
+      content="Offline Interactive Knowledge Dashboard for the Pakistan Entry-Test Knowledge Vault."
+    />
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
+    <link rel="manifest" href="manifest.json" />
+
+    <!-- Design tokens first — everything else depends on these CSS variables -->
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+
+    <!--
+    Inline, render-blocking, deliberately tiny: applies the saved
+    theme/contrast BEFORE first paint so there's no flash of the
+    wrong theme. Everything else theme-related (js/core/themeManager.js)
+    runs later, after the DOM exists, and re-applies the same values —
+    this duplication is intentional, see themeManager.js's header comment.
+  -->
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("etv:theme") || "light";
+          var contrast = localStorage.getItem("etv:contrast") || "normal";
+          document.documentElement.setAttribute("data-theme", theme.replace(/"/g, ""));
+          document.documentElement.setAttribute("data-contrast", contrast.replace(/"/g, ""));
+        } catch (e) {
+          /* localStorage unavailable (e.g. privacy mode) — fall back to CSS defaults */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app-root">
+      <!-- Populated by js/app.js. If you see this text, JavaScript did not run —
+         check the browser console and docs/INSTALLATION.md § Troubleshooting. -->
+      <noscript>This dashboard requires JavaScript to be enabled.</noscript>
+    </div>
+
+    <!-- ============ Script load order — see docs/ARCHITECTURE.md ============ -->
+
+    <!-- 1. Data (must exist before anything reads it) -->
+    <script src="data/vault-data.js"></script>
+
+    <!-- 2. Utilities (no dependencies) -->
+    <script src="js/utils/constants.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/formatters.js"></script>
+    <script src="js/utils/validators.js"></script>
+    <script src="js/utils/fuzzyMatch.js"></script>
+
+    <!-- 3. Core infrastructure -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/router.js"></script>
+    <script src="js/storage/storageService.js"></script>
+    <script src="js/core/themeManager.js"></script>
+    <script src="js/core/errorHandler.js"></script>
+    <script src="js/core/perfMonitor.js"></script>
+
+    <!-- 4. Data-dependent engines -->
+    <script src="js/data/dataLoader.js"></script>
+    <script src="js/search/searchEngine.js"></script>
+    <script src="js/search/filterEngine.js"></script>
+    <script src="js/diagnostics/vaultDiagnostics.js"></script>
+
+    <!-- 5. UI components (depend on utils/core/data engines above) -->
+    <script src="js/ui/icons.js"></script>
+    <script src="js/ui/dom.js"></script>
+    <script src="js/ui/focusTrap.js"></script>
+    <script src="js/ui/toast.js"></script>
+    <script src="js/ui/resourceCard.js"></script>
+    <script src="js/ui/resourceModal.js"></script>
+    <script src="js/ui/shortcutsModal.js"></script>
+    <script src="js/ui/commandPalette.js"></script>
+    <script src="js/ui/sidebar.js"></script>
+    <script src="js/ui/header.js"></script>
+    <script src="js/ui/breadcrumbs.js"></script>
+    <script src="js/ui/filterPanel.js"></script>
+    <script src="js/ui/contextMenu.js"></script>
+    <script src="js/ui/virtualList.js"></script>
+
+    <!-- 6. Views (depend on UI components) -->
+    <script src="js/views/homeView.js"></script>
+    <script src="js/views/browseView.js"></script>
+    <script src="js/views/collectionView.js"></script>
+    <script src="js/views/queueView.js"></script>
+    <script src="js/views/statsView.js"></script>
+    <script src="js/views/diagnosticsView.js"></script>
+    <script src="js/views/settingsView.js"></script>
+
+    <!-- 7. Bootstrap — wires everything together, must load last -->
+    <script src="js/app.js"></script>
+  </body>
+</html>

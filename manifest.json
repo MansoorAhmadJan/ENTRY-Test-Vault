@@ -1,0 +1,13 @@
+{
+  "name": "Entry-Test Knowledge Vault Dashboard",
+  "short_name": "ETV Vault",
+  "description": "Offline interactive dashboard for the Pakistan Entry-Test Knowledge Vault.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f8fa",
+  "theme_color": "#1f3864",
+  "icons": [
+    { "src": "icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

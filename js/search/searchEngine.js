@@ -1,0 +1,226 @@
+/* ============================================================
+   Search Engine
+   Builds a simple inverted index (token -> Set of resource ids)
+   once at startup, so searches over thousands of resources stay
+   instant (no re-scanning all resources per keystroke). Ranking
+   is a small weighted score: title match > id match > tag match
+   > subject/university match > description match.
+   ============================================================ */
+(function (App) {
+  "use strict";
+
+  let index = new Map(); // token -> Set(resourceId)
+  let resourcesById = new Map();
+  let aliases = {};
+  let builtCount = 0;
+
+  function tokenize(text) {
+    if (!text) return [];
+    return String(text)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, " ")
+      .split(/\s+/)
+      .filter((t) => t.length > 1);
+  }
+
+  function addToIndex(token, id) {
+    if (!index.has(token)) index.set(token, new Set());
+    index.get(token).add(id);
+  }
+
+  function build() {
+    const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
+    index = new Map();
+    resourcesById = new Map();
+    aliases = App.Data.getSearchAliases();
+    const all = App.Data.getAll();
+
+    all.forEach((r) => {
+      resourcesById.set(r.id, r);
+      const fields = [
+        r.id,
+        r.title,
+        r.description,
+        r.subject,
+        r.university,
+        r.chapter,
+        r.platform,
+        r.resourceType,
+        r.category,
+      ];
+      fields.forEach((f) => tokenize(f).forEach((tok) => addToIndex(tok, r.id)));
+      (r.tags || []).forEach((tag) => tokenize(tag).forEach((tok) => addToIndex(tok, r.id)));
+    });
+
+    builtCount = all.length;
+    lastBuildDurationMs = +(
+      (typeof performance !== "undefined" ? performance.now() : Date.now()) - t0
+    ).toFixed(2);
+    return true;
+  }
+
+  // Resolve an alias term to its canonical form, if one exists.
+  function resolveAlias(term) {
+    const lower = term.toLowerCase();
+    return aliases[lower] || null;
+  }
+
+  function fieldContains(field, q) {
+    return field && String(field).toLowerCase().includes(q);
+  }
+
+  function scoreResource(r, qLower, qTokens) {
+    let score = 0;
+    if (String(r.id).toLowerCase() === qLower) score += 100;
+    if (fieldContains(r.id, qLower)) score += 20;
+    if (fieldContains(r.title, qLower)) score += 40;
+    if (fieldContains(r.subject, qLower)) score += 15;
+    if (fieldContains(r.university, qLower)) score += 15;
+    if ((r.tags || []).some((t) => fieldContains(t, qLower))) score += 18;
+    if (fieldContains(r.description, qLower)) score += 8;
+
+    // token-level partial credit so multi-word queries still rank sensibly
+    qTokens.forEach((tok) => {
+      if (fieldContains(r.title, tok)) score += 6;
+      if ((r.tags || []).some((t) => fieldContains(t, tok))) score += 4;
+      if (fieldContains(r.description, tok)) score += 1;
+    });
+
+    if (r.priority) score += r.priority; // slight bump for higher-priority resources on ties
+    return score;
+  }
+
+  /**
+   * Instant search. Returns resources ranked by relevance.
+   * @param {string} query
+   * @param {number} limit
+   */
+  function search(query, limit) {
+    limit = limit || 50;
+    const q = (query || "").trim();
+    if (!q) return [];
+
+    const qLower = q.toLowerCase();
+    const qTokens = tokenize(q);
+    const alias = resolveAlias(qLower);
+    const effectiveTokens = alias ? qTokens.concat(tokenize(alias)) : qTokens;
+
+    // Candidate set: union of token matches from the index (fast filter),
+    // then precisely scored/ranked with the substring-aware scorer above.
+    const candidateIds = new Set();
+    const fuzzyMatchedIds = new Set(); // tracked separately so exact matches can outrank typo matches on ties
+    effectiveTokens.forEach((tok) => {
+      let tokenHadMatch = false;
+      index.forEach((ids, indexedToken) => {
+        if (
+          indexedToken.includes(tok) ||
+          (indexedToken.length >= 4 && tok.includes(indexedToken))
+        ) {
+          ids.forEach((id) => candidateIds.add(id));
+          tokenHadMatch = true;
+        }
+      });
+      // Typo tolerance: only spend the O(index size) fuzzy scan on tokens that
+      // found nothing exact — keeps the common case (correctly-spelled queries) fast.
+      if (!tokenHadMatch && tok.length >= 3) {
+        index.forEach((ids, indexedToken) => {
+          if (App.FuzzyMatch.isCloseMatch(tok, indexedToken)) {
+            ids.forEach((id) => {
+              candidateIds.add(id);
+              fuzzyMatchedIds.add(id);
+            });
+          }
+        });
+      }
+    });
+    // Always also do a direct substring pass in case tokenization split something odd
+    if (candidateIds.size === 0) {
+      resourcesById.forEach((r, id) => {
+        if (
+          fieldContains(r.title, qLower) ||
+          fieldContains(r.description, qLower) ||
+          fieldContains(r.id, qLower)
+        ) {
+          candidateIds.add(id);
+        }
+      });
+    }
+
+    const results = Array.from(candidateIds)
+      .map((id) => resourcesById.get(id))
+      .filter(Boolean)
+      .map((r) => ({
+        resource: r,
+        score: scoreResource(r, qLower, effectiveTokens) - (fuzzyMatchedIds.has(r.id) ? 5 : 0),
+        viaFuzzy: fuzzyMatchedIds.has(r.id),
+      }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((x) => x.resource);
+
+    return results;
+  }
+
+  /**
+   * Wraps matches of `query` in `text` with <mark class="hl"> for highlighting.
+   * Escapes HTML first to stay XSS-safe, then re-inserts marks.
+   */
+  function highlight(text, query) {
+    if (!text) return "";
+    const escaped = String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    if (!query) return escaped;
+    const tokens = tokenize(query).filter((t) => t.length > 1);
+    if (!tokens.length) return escaped;
+    const pattern = tokens.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    try {
+      const re = new RegExp("(" + pattern + ")", "gi");
+      return escaped.replace(re, '<mark class="hl">$1</mark>');
+    } catch (e) {
+      return escaped;
+    }
+  }
+
+  /**
+   * Autocomplete suggestions for a partial query — indexed tokens that start
+   * with `prefix`, ranked by how many resources they appear in.
+   */
+  function getSuggestions(prefix, limit) {
+    limit = limit || 6;
+    const p = (prefix || "").trim().toLowerCase();
+    if (p.length < 2) return [];
+    const matches = [];
+    index.forEach((ids, token) => {
+      if (token.startsWith(p) && token !== p) matches.push({ term: token, count: ids.size });
+    });
+    return matches.sort((a, b) => b.count - a.count).slice(0, limit);
+  }
+
+  let lastBuildDurationMs = 0;
+  function getIndexHealth() {
+    let totalPostings = 0;
+    index.forEach((ids) => {
+      totalPostings += ids.size;
+    });
+    return {
+      resourceCount: builtCount,
+      uniqueTokens: index.size,
+      totalPostings,
+      avgTokensPerResource: builtCount ? +(totalPostings / builtCount).toFixed(1) : 0,
+      lastBuildDurationMs,
+    };
+  }
+
+  App.Search = {
+    build,
+    search,
+    highlight,
+    resolveAlias,
+    tokenize,
+    getSuggestions,
+    getIndexHealth,
+    get indexedCount() {
+      return builtCount;
+    },
+  };
+})((window.App = window.App || {}));
