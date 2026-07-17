@@ -152,9 +152,10 @@
       document.dispatchEvent(new CustomEvent("app:data-changed"));
     });
     const noteEl = App.Dom.qs("#resource-note", overlayEl);
-    noteEl.addEventListener("blur", () =>
-      App.ErrorHandler.safeCall("save note", () => App.Storage.setNote(resource.id, noteEl.value))
-    );
+    noteEl.addEventListener("blur", () => {
+      App.ErrorHandler.safeCall("save note", () => App.Storage.setNote(resource.id, noteEl.value));
+      document.dispatchEvent(new CustomEvent("app:data-changed"));
+    });
 
     App.Dom.qsa("[data-open-related]", overlayEl).forEach((btn) => {
       btn.addEventListener("click", () => open(btn.getAttribute("data-open-related")));

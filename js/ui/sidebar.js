@@ -51,11 +51,13 @@
     if (!root) return;
 
     let mainSection = "";
+    let workspaceSection = "";
     let insightsSection = "";
     let systemSection = "";
     App.Config.NAV_ITEMS.forEach((item) => {
       const html = navItemHtml(item, route.view);
-      if (item.section === "Insights") insightsSection += html;
+      if (item.section === "Workspace") workspaceSection += html;
+      else if (item.section === "Insights") insightsSection += html;
       else if (item.section === "System") systemSection += html;
       else mainSection += html;
     });
@@ -75,6 +77,8 @@
       <nav class="sidebar-nav" aria-label="Primary">
         <div class="nav-section-label">Vault</div>
         ${mainSection}
+        <div class="nav-section-label">Workspace</div>
+        ${workspaceSection}
         <div class="nav-section-label">Universities</div>
         ${uniSection}
         <div class="nav-section-label">Insights</div>

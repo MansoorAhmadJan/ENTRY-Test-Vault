@@ -58,3 +58,70 @@ describe("App.Search (real index, real vault data)", () => {
     });
   });
 });
+
+describe("App.Search — Search 2.0: multi-token alias resolution", () => {
+  beforeAll(async () => {
+    await bootApp(window);
+    window.App.Data.init();
+    window.App.Search.build();
+  });
+
+  it("resolves a known alias embedded in a longer query, not just as the whole query", () => {
+    // "mechanics" is a real curated alias -> "physics" (data/vault-data.json).
+    // V4.4 behavior only resolved aliases when they were the ENTIRE query;
+    // this checks the V5.0 fix: the alias should also resolve when it's
+    // just one word inside a longer search.
+    const wholeQuery = window.App.Search.search("mechanics", 20);
+    const embedded = window.App.Search.search("mechanics past papers", 20);
+    expect(wholeQuery.length).toBeGreaterThan(0);
+    expect(embedded.length).toBeGreaterThan(0);
+    // Both should surface Physics-subject resources via the alias.
+    expect(embedded.some((r) => r.subject === "Physics")).toBe(true);
+  });
+
+  it("resolves a two-word alias phrase (bigram) embedded in a query", () => {
+    // "full length paper" -> "mock test" is a real curated alias.
+    const results = window.App.Search.search("full length paper 2024", 20);
+    expect(results.length).toBeGreaterThan(0);
+  });
+});
+
+describe("App.Search — Search 2.0: topic-aware boosting", () => {
+  beforeAll(async () => {
+    await bootApp(window);
+    window.App.Data.init();
+    window.App.Search.build();
+  });
+
+  it("getTopicMatch identifies a real subject name", () => {
+    const topic = window.App.Search.getTopicMatch("physics");
+    expect(topic).toEqual({ type: "subject", value: "Physics", label: "Physics" });
+  });
+
+  it("getTopicMatch identifies a university by key or label", () => {
+    expect(window.App.Search.getTopicMatch("giki")).toMatchObject({
+      type: "university",
+      value: "GIKI",
+    });
+  });
+
+  it("getTopicMatch resolves through an alias (mechanics -> physics subject)", () => {
+    const topic = window.App.Search.getTopicMatch("mechanics");
+    expect(topic).toMatchObject({ type: "subject", value: "Physics" });
+  });
+
+  it("getTopicMatch returns null for a query naming no real facet", () => {
+    expect(window.App.Search.getTopicMatch("zzzznonexistentxyz")).toBeNull();
+  });
+
+  it("a topic-matched query returns every resource on that subject, including ones with no literal text overlap", () => {
+    const physicsResources = window.App.Data.getAll().filter((r) => r.subject === "Physics");
+    const results = window.App.Search.search("mechanics", 100);
+    const resultIds = new Set(results.map((r) => r.id));
+    // Every real Physics resource should be present via the topic boost,
+    // even ones whose title/description never says "physics" or "mechanics".
+    physicsResources.forEach((r) => {
+      expect(resultIds.has(r.id)).toBe(true);
+    });
+  });
+});

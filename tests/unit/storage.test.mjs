@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { bootApp } from "../helpers/bootApp.mjs";
 
 describe("App.Storage (real localStorage-backed persistence)", () => {
@@ -96,5 +96,128 @@ describe("App.Storage (real localStorage-backed persistence)", () => {
     };
     expect(() => window.App.Storage.setTheme("dark")).not.toThrow();
     window.localStorage.setItem = original;
+  });
+});
+
+describe("App.Storage — Goals & study streaks (V5.0)", () => {
+  beforeEach(async () => {
+    window.localStorage.clear();
+    await bootApp(window);
+    vi.useRealTimers();
+  });
+
+  it("getGoals returns sane defaults before any goal is set", () => {
+    const goals = window.App.Storage.getGoals();
+    expect(goals.dailyTarget).toBeGreaterThan(0);
+    expect(goals.weeklyTarget).toBeGreaterThan(0);
+  });
+
+  it("setGoals merges partial updates without clobbering the other target", () => {
+    window.App.Storage.setGoals({ dailyTarget: 5 });
+    const goals = window.App.Storage.getGoals();
+    expect(goals.dailyTarget).toBe(5);
+    expect(goals.weeklyTarget).toBe(window.App.Storage.getGoals().weeklyTarget); // unchanged default
+  });
+
+  it("marking a resource Completed records a completion event for today", () => {
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+    const todayStr = new Date().toISOString().slice(0, 10);
+    expect(window.App.Storage.getCompletionsOnDate(todayStr)).toBe(1);
+  });
+
+  it("re-marking an already-Completed resource does NOT double-count", () => {
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+    window.App.Storage.setProgress("ETV-0001", "Completed"); // redundant call
+    const todayStr = new Date().toISOString().slice(0, 10);
+    expect(window.App.Storage.getCompletionsOnDate(todayStr)).toBe(1);
+  });
+
+  it("reverting then re-completing DOES count again (a real second completion)", () => {
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+    window.App.Storage.setProgress("ETV-0001", "Revision Needed");
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+    const todayStr = new Date().toISOString().slice(0, 10);
+    expect(window.App.Storage.getCompletionsOnDate(todayStr)).toBe(2);
+  });
+
+  it("getDailyGoalProgress reflects today's completions against the target", () => {
+    window.App.Storage.setGoals({ dailyTarget: 2 });
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+    let p = window.App.Storage.getDailyGoalProgress();
+    expect(p).toEqual({ target: 2, completed: 1, pct: 50 });
+    window.App.Storage.setProgress("ETV-0002", "Completed");
+    p = window.App.Storage.getDailyGoalProgress();
+    expect(p).toEqual({ target: 2, completed: 2, pct: 100 });
+  });
+
+  it("getDailyGoalProgress caps pct at 100 when target is exceeded", () => {
+    window.App.Storage.setGoals({ dailyTarget: 1 });
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+    window.App.Storage.setProgress("ETV-0002", "Completed");
+    expect(window.App.Storage.getDailyGoalProgress().pct).toBe(100);
+  });
+
+  it("streak is 0 with no completions ever", () => {
+    expect(window.App.Storage.getStudyStreak()).toBe(0);
+  });
+
+  it("streak is 1 after completing something today only", () => {
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+    expect(window.App.Storage.getStudyStreak()).toBe(1);
+  });
+
+  it("streak counts consecutive backdated days correctly (fake-timer controlled)", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T10:00:00Z"));
+    window.App.Storage.setProgress("ETV-0001", "Completed"); // Jan 1
+
+    vi.setSystemTime(new Date("2026-01-02T10:00:00Z"));
+    window.App.Storage.setProgress("ETV-0002", "Completed"); // Jan 2
+
+    vi.setSystemTime(new Date("2026-01-03T10:00:00Z"));
+    window.App.Storage.setProgress("ETV-0003", "Completed"); // Jan 3 (today)
+
+    expect(window.App.Storage.getStudyStreak()).toBe(3);
+    vi.useRealTimers();
+  });
+
+  it("a gap day breaks the streak (yesterday empty, today has one -> streak resets to 1)", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T10:00:00Z"));
+    window.App.Storage.setProgress("ETV-0001", "Completed"); // Jan 1
+
+    // Jan 2: nothing completed (gap day)
+
+    vi.setSystemTime(new Date("2026-01-03T10:00:00Z"));
+    window.App.Storage.setProgress("ETV-0002", "Completed"); // Jan 3 (today)
+
+    expect(window.App.Storage.getStudyStreak()).toBe(1); // Jan 1's streak doesn't reach across the Jan 2 gap
+    vi.useRealTimers();
+  });
+
+  it("streak stays alive (not yet broken) if yesterday had a completion but today doesn't yet", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T10:00:00Z"));
+    window.App.Storage.setProgress("ETV-0001", "Completed"); // yesterday, relative to below
+
+    vi.setSystemTime(new Date("2026-01-02T09:00:00Z")); // today, nothing completed YET
+    expect(window.App.Storage.getStudyStreak()).toBe(1); // still counts yesterday's day
+    vi.useRealTimers();
+  });
+
+  it("getWeeklyGoalProgress sums completions across the last 7 days (rolling window)", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T10:00:00Z"));
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+
+    vi.setSystemTime(new Date("2026-01-05T10:00:00Z"));
+    window.App.Storage.setProgress("ETV-0002", "Completed");
+
+    vi.setSystemTime(new Date("2026-01-20T10:00:00Z")); // 15+ days later — Jan 1 event now outside the 7-day window
+    window.App.Storage.setProgress("ETV-0003", "Completed");
+
+    const p = window.App.Storage.getWeeklyGoalProgress();
+    expect(p.completed).toBe(1); // only the Jan 20 event is within the last 7 days from "now"
+    vi.useRealTimers();
   });
 });

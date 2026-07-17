@@ -14,6 +14,15 @@
   let aliases = {};
   let builtCount = 0;
 
+  // ---- Search 2.0: topic lookup tables (Objective #6) ----
+  // Maps a lowercased facet name -> canonical { type, value, label } so a
+  // query token that names a subject/university/category can boost/attach
+  // resources by FACET even when the word never appears in the resource's
+  // title or description (e.g. "mechanics" -> alias "physics" -> subject
+  // facet "Physics", even for a resource titled "GIKI Paper 2021" that
+  // never literally says "physics").
+  let topicLookup = new Map();
+
   function tokenize(text) {
     if (!text) return [];
     return String(text)
@@ -53,6 +62,27 @@
     });
 
     builtCount = all.length;
+
+    topicLookup = new Map();
+    App.Data.getSubjects().forEach((s) =>
+      topicLookup.set(s.toLowerCase(), { type: "subject", value: s, label: s })
+    );
+    App.Data.getUniversities().forEach((u) => {
+      topicLookup.set(u.key.toLowerCase(), { type: "university", value: u.key, label: u.label });
+      topicLookup.set(u.label.toLowerCase(), {
+        type: "university",
+        value: u.key,
+        label: u.label,
+      });
+    });
+    new Set(all.map((r) => r.category).filter(Boolean)).forEach((c) => {
+      const key = c.toLowerCase();
+      // Subject/university names win ties (see test: "Physics" is both a
+      // subject AND a category value in the real dataset — searching
+      // "physics" should mean the subject, the broader/more useful facet).
+      if (!topicLookup.has(key)) topicLookup.set(key, { type: "category", value: c, label: c });
+    });
+
     lastBuildDurationMs = +(
       (typeof performance !== "undefined" ? performance.now() : Date.now()) - t0
     ).toFixed(2);
@@ -63,6 +93,43 @@
   function resolveAlias(term) {
     const lower = term.toLowerCase();
     return aliases[lower] || null;
+  }
+
+  // Search 2.0: alias resolution across the WHOLE query (original V4.4
+  // behavior, kept for backward compatibility with anything calling
+  // resolveAlias() directly) is too narrow — "flp" resolves but "flp 2024"
+  // does not, even though a human typing "flp 2024" clearly means the same
+  // thing. This expands aliasing to also check each individual token and
+  // each adjacent bigram (since several real aliases are two words, e.g.
+  // "advance maths", "full length paper", "video course").
+  function resolveAliasesInQuery(qLower, qTokens) {
+    const resolved = new Set();
+    const whole = resolveAlias(qLower);
+    if (whole) resolved.add(whole);
+    qTokens.forEach((tok) => {
+      const a = resolveAlias(tok);
+      if (a) resolved.add(a);
+    });
+    for (let i = 0; i < qTokens.length - 1; i++) {
+      const bigram = qTokens[i] + " " + qTokens[i + 1];
+      const a = resolveAlias(bigram);
+      if (a) resolved.add(a);
+    }
+    return Array.from(resolved);
+  }
+
+  // Search 2.0 topic-aware matching: does this (already alias-expanded)
+  // token set name a real subject / university / category? Returns the
+  // best single match (subject/university beat category on tie, since
+  // they're the more common way people search) or null.
+  function findTopicMatch(effectiveTokens, qLower) {
+    if (topicLookup.has(qLower)) return topicLookup.get(qLower);
+    let found = null;
+    effectiveTokens.forEach((tok) => {
+      if (found) return;
+      if (topicLookup.has(tok)) found = topicLookup.get(tok);
+    });
+    return found;
   }
 
   function fieldContains(field, q) {
@@ -102,8 +169,27 @@
 
     const qLower = q.toLowerCase();
     const qTokens = tokenize(q);
-    const alias = resolveAlias(qLower);
-    const effectiveTokens = alias ? qTokens.concat(tokenize(alias)) : qTokens;
+    const resolvedAliases = resolveAliasesInQuery(qLower, qTokens);
+    const effectiveTokens = resolvedAliases.length
+      ? qTokens.concat(resolvedAliases.flatMap((a) => tokenize(a)))
+      : qTokens;
+
+    // Search 2.0: topic-aware boost. If the query (post-alias) names a real
+    // subject/university/category, pull in every resource on that facet as
+    // a candidate — this is what lets "mechanics" (-> alias "physics")
+    // surface a Physics past-paper whose title never contains the word
+    // "physics" at all, not just resources with literal text overlap.
+    const topic = findTopicMatch(effectiveTokens, qLower);
+    const topicBoostedIds = new Set();
+    if (topic) {
+      resourcesById.forEach((r, id) => {
+        const matches =
+          (topic.type === "subject" && r.subject === topic.value) ||
+          (topic.type === "university" && r.university === topic.value) ||
+          (topic.type === "category" && r.category === topic.value);
+        if (matches) topicBoostedIds.add(id);
+      });
+    }
 
     // Candidate set: union of token matches from the index (fast filter),
     // then precisely scored/ranked with the substring-aware scorer above.
@@ -145,13 +231,17 @@
         }
       });
     }
+    topicBoostedIds.forEach((id) => candidateIds.add(id));
 
     const results = Array.from(candidateIds)
       .map((id) => resourcesById.get(id))
       .filter(Boolean)
       .map((r) => ({
         resource: r,
-        score: scoreResource(r, qLower, effectiveTokens) - (fuzzyMatchedIds.has(r.id) ? 5 : 0),
+        score:
+          scoreResource(r, qLower, effectiveTokens) -
+          (fuzzyMatchedIds.has(r.id) ? 5 : 0) +
+          (topicBoostedIds.has(r.id) ? 25 : 0),
         viaFuzzy: fuzzyMatchedIds.has(r.id),
       }))
       .filter((x) => x.score > 0)
@@ -211,11 +301,28 @@
     };
   }
 
+  /**
+   * Public entry point for "topic-aware" UI hints (e.g. a "Related: Physics"
+   * chip under the search box). Wraps the internal alias+topic resolution
+   * used by search() itself, so the hint always matches actual behavior.
+   */
+  function getTopicMatch(query) {
+    const q = (query || "").trim().toLowerCase();
+    if (!q) return null;
+    const qTokens = tokenize(q);
+    const resolvedAliases = resolveAliasesInQuery(q, qTokens);
+    const effectiveTokens = resolvedAliases.length
+      ? qTokens.concat(resolvedAliases.flatMap((a) => tokenize(a)))
+      : qTokens;
+    return findTopicMatch(effectiveTokens, q);
+  }
+
   App.Search = {
     build,
     search,
     highlight,
     resolveAlias,
+    getTopicMatch,
     tokenize,
     getSuggestions,
     getIndexHealth,

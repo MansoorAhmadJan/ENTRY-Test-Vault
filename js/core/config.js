@@ -21,6 +21,8 @@
     { route: "favorites", label: "Favorites", icon: "heart", countKey: "favorites" },
     { route: "bookmarks", label: "Bookmarks", icon: "bookmark", countKey: "bookmarks" },
     { route: "queue", label: "Reading Queue", icon: "layers", countKey: "queue" },
+    { route: "goals", label: "Study Goals", icon: "checkCircle", section: "Workspace" },
+    { route: "notes", label: "My Notes", icon: "note", section: "Workspace" },
     { route: "progress", label: "Progress Tracker", icon: "checkCircle", countKey: "inProgress" },
     { route: "stats", label: "Statistics", icon: "barChart", section: "Insights" },
     { route: "diagnostics", label: "Diagnostics", icon: "shield", section: "Insights" },

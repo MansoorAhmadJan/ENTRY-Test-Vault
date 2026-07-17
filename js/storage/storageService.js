@@ -25,6 +25,8 @@
     savedSearches: NS + "savedSearches", // [{ id, name, query, filters }]
     filterPresets: NS + "filterPresets", // [{ id, name, filters }]
     readingQueue: NS + "readingQueue", // [resourceId, ...] user-ordered
+    goals: NS + "goals", // { dailyTarget, weeklyTarget } — resource-completion counts (V5.0)
+    completionEvents: NS + "completionEvents", // [{ id, date: "YYYY-MM-DD" }, ...] — one per transition INTO "Completed" (V5.0)
   };
 
   function safeGet(key, fallback) {
@@ -109,8 +111,106 @@
       return false;
     }
     const map = getProgressMap();
+    const prev = map[id];
     map[id] = status;
-    return safeSet(KEYS.progress, map);
+    const ok = safeSet(KEYS.progress, map);
+    if (ok && status === "Completed" && prev !== "Completed") {
+      recordCompletionEvent(id);
+    }
+    return ok;
+  }
+
+  // ---------------- Goals & study streaks (V5.0) ----------------
+  // Design: goals are tracked purely by COUNT of resources marked
+  // Completed, not estimated study minutes. Resource `estTime` in the data
+  // is a free-text string ("2-3 hrs per paper attempt"), not a structured
+  // duration — parsing it reliably enough to sum into a minutes target
+  // would be guessing at precision the data doesn't have, so we don't.
+  const MAX_COMPLETION_EVENTS = 3000; // generous cap; defensive against unbounded growth
+  const DEFAULT_GOALS = { dailyTarget: 3, weeklyTarget: 15 };
+
+  function todayStr() {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+
+  function dateStrDaysAgo(n) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+
+  function getCompletionEvents() {
+    return safeGet(KEYS.completionEvents, []);
+  }
+  function recordCompletionEvent(id) {
+    let events = getCompletionEvents();
+    events.push({ id, date: todayStr() });
+    if (events.length > MAX_COMPLETION_EVENTS) {
+      events = events.slice(events.length - MAX_COMPLETION_EVENTS);
+    }
+    safeSet(KEYS.completionEvents, events);
+  }
+  function getCompletionsOnDate(dateStr) {
+    return getCompletionEvents().filter((e) => e.date === dateStr).length;
+  }
+  function getCompletionsSinceDaysAgo(n) {
+    // Inclusive rolling window: today plus the previous n days (n=6 -> 7-day week).
+    const cutoff = dateStrDaysAgo(n);
+    return getCompletionEvents().filter((e) => e.date >= cutoff).length;
+  }
+
+  function getGoals() {
+    return Object.assign({}, DEFAULT_GOALS, safeGet(KEYS.goals, {}));
+  }
+  function setGoals(partial) {
+    const merged = Object.assign({}, getGoals(), partial || {});
+    safeSet(KEYS.goals, merged);
+    return merged;
+  }
+
+  function getDailyGoalProgress() {
+    const target = getGoals().dailyTarget;
+    const completed = getCompletionsOnDate(todayStr());
+    return {
+      target,
+      completed,
+      pct: target ? Math.min(100, Math.round((completed / target) * 100)) : 0,
+    };
+  }
+  function getWeeklyGoalProgress() {
+    const target = getGoals().weeklyTarget;
+    const completed = getCompletionsSinceDaysAgo(6);
+    return {
+      target,
+      completed,
+      pct: target ? Math.min(100, Math.round((completed / target) * 100)) : 0,
+    };
+  }
+
+  /**
+   * Current study streak, in consecutive days with at least one completion.
+   * Definition (documented because streak off-by-ones are a classic bug):
+   * walk backward from TODAY. If today has zero completions yet, that does
+   * NOT break a streak that's still "alive" from yesterday — it just hasn't
+   * extended today. So: start the walk at today; if today has 0, start
+   * counting from yesterday instead; then count consecutive days backward
+   * until the first day with 0 completions.
+   */
+  function getStudyStreak() {
+    const hasEventsOn = (dateStr) => getCompletionEvents().some((e) => e.date === dateStr);
+    let offset = hasEventsOn(todayStr()) ? 0 : 1;
+    if (offset === 1 && !hasEventsOn(dateStrDaysAgo(1))) return 0; // no events today OR yesterday -> no active streak
+    let streak = 0;
+    while (hasEventsOn(dateStrDaysAgo(offset))) {
+      streak++;
+      offset++;
+    }
+    return streak;
   }
 
   // ---------------- Notes ----------------
@@ -315,6 +415,14 @@
     removeFromQueue,
     toggleQueue,
     reorderQueue,
+    getGoals,
+    setGoals,
+    getCompletionEvents,
+    getCompletionsOnDate,
+    getCompletionsSinceDaysAgo,
+    getDailyGoalProgress,
+    getWeeklyGoalProgress,
+    getStudyStreak,
     exportAll,
     importAll,
     clearAll,

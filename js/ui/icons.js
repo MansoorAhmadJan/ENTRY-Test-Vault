@@ -54,6 +54,7 @@
     upload: `<svg viewBox="0 0 24 24" ${stroke}><path d="M12 21V9m0 0l4 4m-4-4l-4 4"/><path d="M4 5h16"/></svg>`,
     barChart: `<svg viewBox="0 0 24 24" ${stroke}><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>`,
     command: `<svg viewBox="0 0 24 24" ${stroke}><path d="M6 9a3 3 0 1 1 3 3H6a3 3 0 1 1 3-3zm9 0a3 3 0 1 0-3 3h3a3 3 0 1 0-3-3zM6 15a3 3 0 1 0 3 3v-3H6zm9 0a3 3 0 1 1 3 3v-3h-3z"/></svg>`,
+    note: `<svg viewBox="0 0 24 24" ${stroke}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>`,
   };
 
   App.Icons = {

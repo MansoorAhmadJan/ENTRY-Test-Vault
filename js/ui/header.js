@@ -108,11 +108,25 @@
         return;
       }
       const results = App.ErrorHandler.safeCall("global search", () => App.Search.search(q, 8), []);
+      const topic = App.ErrorHandler.safeCall(
+        "topic match",
+        () => App.Search.getTopicMatch(q),
+        null
+      );
       const suggestions =
         q.length >= 2 && q.length <= 6
           ? App.ErrorHandler.safeCall("suggestions", () => App.Search.getSuggestions(q, 4), [])
           : [];
       let html = "";
+      if (topic) {
+        const gotoRoute =
+          topic.type === "university"
+            ? `university/${encodeURIComponent(topic.value)}`
+            : topic.type === "subject"
+              ? `subject/${encodeURIComponent(topic.value)}`
+              : null;
+        html += `<div class="sd-topic-hint" ${gotoRoute ? `data-goto-topic="${gotoRoute}" role="button" tabindex="0"` : ""} style="padding:8px 12px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border);${gotoRoute ? "cursor:pointer;" : ""}">Related topic: <strong style="color:var(--text-primary);">${App.Utils.escapeHtml(topic.label)}</strong>${gotoRoute ? " — click to browse" : ""}</div>`;
+      }
       if (suggestions.length)
         html += `<div class="sd-section-label">Suggestions</div>${suggestions.map(suggestionItemHtml).join("")}`;
       if (!results.length) {
@@ -160,6 +174,12 @@
       input.value = item.getAttribute("data-suggestion");
       runSearch();
       input.focus();
+    });
+    App.Dom.delegate(dropdown, "click", "[data-goto-topic]", (item) => {
+      App.Router.navigate(item.getAttribute("data-goto-topic"));
+      closeDropdown();
+      input.value = "";
+      clearBtn.style.display = "none";
     });
     clearBtn.addEventListener("click", () => {
       input.value = "";

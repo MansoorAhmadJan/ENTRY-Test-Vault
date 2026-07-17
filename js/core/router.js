@@ -10,6 +10,9 @@
      #/progress
      #/stats
      #/diagnostics                 -> vault data-integrity report (added V4.2)
+     #/queue                        -> reading queue (drag to reorder)
+     #/goals                        -> daily/weekly study goals (V5.0)
+     #/notes                        -> aggregate view of all your saved notes (V5.0)
      #/settings
      #/resource/:id                -> opens the resource modal over current view
    ============================================================ */
@@ -39,6 +42,8 @@
       case "settings":
       case "diagnostics":
       case "queue":
+      case "goals":
+      case "notes":
         return { view, params: {} };
       default:
         return { view: "home", params: {} };
