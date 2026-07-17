@@ -1,8 +1,14 @@
-# Entry-Test Knowledge Vault — Interactive Dashboard (V4.3)
+# Entry-Test Knowledge Vault — Interactive Dashboard (V5.1)
+
+<!-- Once this repo has a GitHub remote, replace OWNER/REPO below — the badge is a placeholder until then, not a live check. -->
+
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
 
 An offline, framework-free browsing interface for the Pakistan Entry-Test Knowledge Vault (Version 3.0). The Word/Excel documents remain the source of truth; this dashboard is a faster way to browse, search, filter, and track progress through the same data.
 
-**V4.1 (architecture), V4.2 (UI), and V4.3 (advanced usability/performance/robustness) are all complete.** Open `index.html` for the real dashboard — Home with Continue Studying, Browse with fuzzy/typo-tolerant search + multi-filter + presets + pagination/virtual scrolling, a Command Palette (Ctrl+K), context menus, Reading Queue, Favorites/Bookmarks/Progress Tracker, Statistics, Diagnostics (data integrity + performance + system health), and Settings (theme/contrast/granular exports/vault-data import). See `docs/ARCHITECTURE.md` for what's built vs. what remains, and `docs/EXTENSIBILITY.md` for what's genuinely built vs. architecturally prepared for plugins/desktop/AI.
+**Current state (V5.1):** Browse/search/filter/queue/favorites/bookmarks (V4.1–V4.3), a real build+lint+format+test pipeline with 110 automated tests (V4.4), a Personal Learning Workspace — Study Goals, My Notes, alias-aware Search 2.0 (V5.0) — and a Learning Analytics dashboard covering progress, recommendations, revision tracking, and a timeline (V5.1). See `CHANGELOG.md` for the version-by-version detail and `docs/V5_DEFERRED_SCOPE.md` for what was deliberately not built and why.
+
+Open `index.html` directly for the app — no build step required for local use (`npm run build` produces a minified `dist/` if you want a production bundle). See `docs/ARCHITECTURE.md` for what's built vs. what remains, and `docs/EXTENSIBILITY.md` for what's genuinely built vs. architecturally prepared for plugins/desktop/AI.
 
 ## Quick start
 
@@ -10,9 +16,20 @@ An offline, framework-free browsing interface for the Pakistan Entry-Test Knowle
 Double-click index.html. No install, no server, no internet required.
 ```
 
+For development (linting, tests, production build):
+
+```
+npm install
+npm run dev      # zero-build dev server
+npm test         # 110 tests, Vitest + jsdom
+npm run build    # minified dist/ output
+```
+
 ## Documentation
 
+- **`CHANGELOG.md`** — what shipped in each version, and why
 - **`docs/ARCHITECTURE.md`** — module map, dependency order, design decisions, milestone status, and what was actually tested (not just written)
+- **`docs/V5_DEFERRED_SCOPE.md`** — features deliberately deferred (Knowledge Graph, AI layer, etc.), each with a concrete trigger condition for revisiting
 - **`docs/FOLDER_STRUCTURE.md`** — annotated tree of every file and why it's there
 - **`docs/INSTALLATION.md`** — running the dashboard and regenerating its data
 - **`docs/EXTENSIBILITY.md`** — plugin/service-layer/data-provider/PWA/desktop/AI hooks, explicit about what's built vs. prepared
