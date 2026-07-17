@@ -1,5 +1,12 @@
 # Architecture — Entry-Test Knowledge Vault Dashboard (V4.0)
 
+> **V5.0 note:** this doc's core module map and design goals still hold
+> unchanged — V5.0 added new modules following the same conventions
+> (`js/views/goalsView.js`, `js/views/notesView.js`, additive functions in
+> `storageService.js`/`searchEngine.js`), it did not replace anything
+> described below. See `CHANGELOG.md` for what shipped and
+> `docs/V5_DEFERRED_SCOPE.md` for what was deliberately deferred and why.
+
 ## Design goals, and how the architecture serves them
 
 | Goal (from the V4.0 brief)                                        | How the architecture delivers it                                                                                                                                                                                                                                            |
@@ -38,7 +45,7 @@ window.App = {
   Dom:          js/ui/dom.js                // el()/qs()/delegate() helpers (V4.2)
   Toast:        js/ui/toast.js              // notification component (V4.2)
   Components:   js/ui/{resourceCard,resourceModal,sidebar,header,breadcrumbs,filterPanel,shortcutsModal,commandPalette}.js
-  Views:        js/views/{home,browse,collection,queue,stats,diagnostics,settings}View.js
+  Views:        js/views/{home,browse,collection,queue,goals,notes,stats,diagnostics,settings}View.js
   init:         js/app.js                   // bootstrap sequence, wires the above together
 }
 ```
