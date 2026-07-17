@@ -221,3 +221,97 @@ describe("App.Storage — Goals & study streaks (V5.0)", () => {
     vi.useRealTimers();
   });
 });
+
+describe("App.Storage — Activity log & Timeline (V5.1)", () => {
+  beforeEach(async () => {
+    window.localStorage.clear();
+    await bootApp(window);
+    vi.useRealTimers();
+  });
+
+  it("saving a real note records a 'note' activity event", () => {
+    window.App.Storage.setNote("ETV-0001", "hello world");
+    const log = window.App.Storage.getActivityLog();
+    expect(log.some((e) => e.type === "note" && e.id === "ETV-0001")).toBe(true);
+  });
+
+  it("clearing a note does NOT record an activity event", () => {
+    window.App.Storage.setNote("ETV-0001", "hello");
+    window.App.Storage.setNote("ETV-0001", ""); // clear
+    const log = window.App.Storage.getActivityLog();
+    expect(log.filter((e) => e.id === "ETV-0001").length).toBe(1); // only the original save
+  });
+
+  it("adding to the queue records a 'queue-add' event; removing records 'queue-remove'", () => {
+    window.App.Storage.addToQueue("ETV-0001");
+    window.App.Storage.removeFromQueue("ETV-0001");
+    const log = window.App.Storage.getActivityLog();
+    expect(log.some((e) => e.type === "queue-add" && e.id === "ETV-0001")).toBe(true);
+    expect(log.some((e) => e.type === "queue-remove" && e.id === "ETV-0001")).toBe(true);
+  });
+
+  it("adding an already-queued resource again does not double-log", () => {
+    window.App.Storage.addToQueue("ETV-0001");
+    window.App.Storage.addToQueue("ETV-0001"); // already queued, addToQueue is a no-op per existing V4.4 logic
+    const log = window.App.Storage.getActivityLog();
+    expect(log.filter((e) => e.type === "queue-add" && e.id === "ETV-0001").length).toBe(1);
+  });
+
+  it("removing something never queued does not log a spurious removal", () => {
+    window.App.Storage.removeFromQueue("ETV-9999");
+    const log = window.App.Storage.getActivityLog();
+    expect(log.some((e) => e.id === "ETV-9999")).toBe(false);
+  });
+});
+
+describe("App.Storage — Goal history & consistency (V5.1)", () => {
+  beforeEach(async () => {
+    window.localStorage.clear();
+    await bootApp(window);
+  });
+
+  it("getGoalHistory returns exactly N days, most recent last, each with met/target/completed", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-10T10:00:00Z"));
+    window.App.Storage.setGoals({ dailyTarget: 1 });
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+
+    const history = window.App.Storage.getGoalHistory(5);
+    expect(history.length).toBe(5);
+    expect(history[history.length - 1].date).toBe("2026-01-10");
+    expect(history[history.length - 1].met).toBe(true);
+    expect(history[history.length - 1].completed).toBe(1);
+    vi.useRealTimers();
+  });
+
+  it("getGoalConsistency correctly counts met vs missed days", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T10:00:00Z"));
+    window.App.Storage.setGoals({ dailyTarget: 1 });
+    window.App.Storage.setProgress("ETV-0001", "Completed"); // Jan 1: met
+
+    vi.setSystemTime(new Date("2026-01-02T10:00:00Z")); // Jan 2: nothing -> missed
+
+    vi.setSystemTime(new Date("2026-01-02T23:00:00Z"));
+    const consistency = window.App.Storage.getGoalConsistency(2);
+    expect(consistency.totalDays).toBe(2);
+    expect(consistency.metDays).toBe(1);
+    expect(consistency.pct).toBe(50);
+    expect(consistency.missedDays).toContain("2026-01-02");
+    vi.useRealTimers();
+  });
+
+  it("getWeeklyConsistency buckets completions into 7-day windows against the weekly target", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T10:00:00Z"));
+    window.App.Storage.setGoals({ weeklyTarget: 2 });
+    window.App.Storage.setProgress("ETV-0001", "Completed");
+    window.App.Storage.setProgress("ETV-0002", "Completed"); // 2 completions this week -> meets target of 2
+
+    const weeks = window.App.Storage.getWeeklyConsistency(1);
+    expect(weeks.length).toBe(1);
+    expect(weeks[0].completed).toBe(2);
+    expect(weeks[0].met).toBe(true);
+    vi.useRealTimers();
+  });
+});

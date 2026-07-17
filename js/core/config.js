@@ -24,6 +24,7 @@
     { route: "goals", label: "Study Goals", icon: "checkCircle", section: "Workspace" },
     { route: "notes", label: "My Notes", icon: "note", section: "Workspace" },
     { route: "progress", label: "Progress Tracker", icon: "checkCircle", countKey: "inProgress" },
+    { route: "analytics", label: "Learning Analytics", icon: "barChart", section: "Insights" },
     { route: "stats", label: "Statistics", icon: "barChart", section: "Insights" },
     { route: "diagnostics", label: "Diagnostics", icon: "shield", section: "Insights" },
     { route: "settings", label: "Settings", icon: "settings", section: "System" },

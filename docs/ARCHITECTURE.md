@@ -6,6 +6,13 @@
 > `storageService.js`/`searchEngine.js`), it did not replace anything
 > described below. See `CHANGELOG.md` for what shipped and
 > `docs/V5_DEFERRED_SCOPE.md` for what was deliberately deferred and why.
+>
+> **V5.1 note:** added `js/analytics/analyticsEngine.js` as a new,
+> self-contained module (Objective #10: kept separate from core) — it
+> reads `App.Data`/`App.Storage`, writes nothing, and can be deleted
+> without losing any user data. See `CHANGELOG.md` for the full list of
+> what it computes and `js/analytics/analyticsEngine.js`'s own header
+> comment for the performance/scale design notes.
 
 ## Design goals, and how the architecture serves them
 
@@ -45,7 +52,8 @@ window.App = {
   Dom:          js/ui/dom.js                // el()/qs()/delegate() helpers (V4.2)
   Toast:        js/ui/toast.js              // notification component (V4.2)
   Components:   js/ui/{resourceCard,resourceModal,sidebar,header,breadcrumbs,filterPanel,shortcutsModal,commandPalette}.js
-  Views:        js/views/{home,browse,collection,queue,goals,notes,stats,diagnostics,settings}View.js
+  Views:        js/views/{home,browse,collection,queue,goals,notes,analytics,stats,diagnostics,settings}View.js
+  Analytics:    js/analytics/analyticsEngine.js // pure aggregation over App.Data + App.Storage (V5.1)
   init:         js/app.js                   // bootstrap sequence, wires the above together
 }
 ```

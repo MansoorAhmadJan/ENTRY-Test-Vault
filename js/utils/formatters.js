@@ -60,5 +60,28 @@
     return BADGE_COLOR[value] || "badge-grey";
   }
 
-  App.Formatters = { starRating, truncate, pluralize, formatDate, badgeClass };
+  /**
+   * Parses the vault's free-text `estTime` field (e.g. "2–3 hrs per paper
+   * attempt", "20+ hrs (full video course)", "0.5–1 hr (reading)") into an
+   * approximate numeric hours range. Returns null for anything that
+   * doesn't match a recognizable pattern — analytics code MUST treat null
+   * as "unknown", not silently drop it to 0, since 0 hours is a false
+   * claim of precision the source data doesn't have.
+   *
+   * Deliberately simple: this is a best-effort approximation for
+   * dashboard summaries, not a claim that the vault has structured time
+   * data (it doesn't — see docs/V5_DEFERRED_SCOPE.md item 5).
+   */
+  function parseEstTime(str) {
+    if (!str) return null;
+    // Matches "2–3", "2-3", "20+", "0.5–1" — en-dash or hyphen, optional "+".
+    const m = String(str).match(/(\d+(?:\.\d+)?)\s*(?:[–-]\s*(\d+(?:\.\d+)?))?\s*(\+)?\s*hrs?/i);
+    if (!m) return null;
+    const min = parseFloat(m[1]);
+    const max = m[2] ? parseFloat(m[2]) : m[3] ? null : min; // "X+" -> max unknown; plain "X" -> max=min
+    const avg = max !== null ? (min + max) / 2 : min; // open-ended: report the stated minimum, not a guessed ceiling
+    return { min, max, avg, openEnded: !!m[3] };
+  }
+
+  App.Formatters = { starRating, truncate, pluralize, formatDate, badgeClass, parseEstTime };
 })((window.App = window.App || {}));

@@ -13,6 +13,7 @@
      #/queue                        -> reading queue (drag to reorder)
      #/goals                        -> daily/weekly study goals (V5.0)
      #/notes                        -> aggregate view of all your saved notes (V5.0)
+     #/analytics                    -> Learning Analytics dashboard (V5.1)
      #/settings
      #/resource/:id                -> opens the resource modal over current view
    ============================================================ */
@@ -44,6 +45,7 @@
       case "queue":
       case "goals":
       case "notes":
+      case "analytics":
         return { view, params: {} };
       default:
         return { view: "home", params: {} };

@@ -1,6 +1,78 @@
 # Changelog
 
-## V5.0 (current)
+## V5.1 (current)
+
+**Learning Analytics** — new, self-contained module
+(`js/analytics/analyticsEngine.js`), a new `#/analytics` page
+(`js/views/analyticsView.js`), new "Learning Analytics" sidebar item.
+
+- **Learning Dashboard:** overall completion, per-subject and
+  per-university progress, last-7-days activity chart, study streak,
+  approximate remaining study time.
+- **Progress Analytics:** per-subject completion %, resources remaining,
+  approximate remaining hours. Uses the vault's **real 7 subjects**
+  (`Entry Test Strategy`, `Multi-Subject / General Prep`, `English`,
+  `Mathematics`, `Physics`, `IQ / Analytical Reasoning`, `Chemistry`) —
+  not the 7 names originally requested (`Computer`, `General Knowledge`
+  don't exist in the data; `IQ` maps to `IQ / Analytical Reasoning`).
+  Hardcoding the requested names would have silently shown 0/0 forever
+  for two of them.
+- **Learning Recommendations:** rule-based (continue / next-topic /
+  revision / missing-prerequisite). See `docs/V5_DEFERRED_SCOPE.md` item
+  3 for why this is rule-based rather than learned, and why that's the
+  right call at 102 resources.
+- **Resource Insights:** frequently-revisited resources, average
+  completion time (approximate, from parsed `estTime`).
+- **Goal Analytics:** daily/weekly consistency over the last 30
+  days/4 weeks, missed-day list. Uses today's goal target retroactively
+  for past days (historical targets aren't stored — documented plainly
+  in `storageService.js`, not hidden).
+- **Revision Tracking:** last-studied date (last completion or note),
+  a recommended review date (fixed +14-day heuristic, explicitly not a
+  tuned spaced-repetition algorithm), overdue flag, full revision
+  history per resource.
+- **Timeline:** merges completions, note-saves, and queue add/remove
+  into one feed. Historical data starts from when V5.1 was installed —
+  notes/queue items that already existed have no real creation date to
+  show, and none is fabricated.
+- **Personal Statistics:** notes/favorites/queue counts, "study
+  sessions" (distinct days with any tracked activity), estimated total
+  study hours (approximate).
+- **Data Export:** a new `exportAnalyticsSummary()` report (JSON
+  download from the dashboard), distinct from the existing raw backup
+  export (`App.Storage.exportAll()`, unchanged, still covers
+  progress/goals/notes automatically since it's generic over all
+  storage keys).
+
+**New estTime parser** (`App.Formatters.parseEstTime`, in
+`js/utils/formatters.js`) — the vault's free-text time estimates
+("2–3 hrs", "20+ hrs") are now parsed into an approximate numeric range,
+validated against all 8 unique real values in the dataset (100%
+parseable). Anything unparseable returns `null` and is excluded from
+sums, never silently treated as 0 hours.
+
+**Storage additions** (all additive, `App.Storage.exportAll()`/
+`importAll()` automatically cover them since those are generic over
+`KEYS`): `activityLog` (note/queue events for the Timeline),
+`getGoalHistory()`/`getGoalConsistency()`/`getWeeklyConsistency()`.
+`setNote()` now logs a "note" activity event on real saves;
+`addToQueue()`/`removeFromQueue()` now log queue events.
+
+**Performance (Objective #11):** verified, not just claimed — a test
+builds a synthetic 50,000-resource dataset and confirms the full
+dashboard aggregation completes in under 500ms (`tests/component/
+analyticsView.test.mjs`). The remaining real constraint at that scale
+is `localStorage`'s size ceiling, a storage-backend question, not an
+analytics-algorithm one — see `docs/V5_DEFERRED_SCOPE.md` item 10.
+
+**Testing:** 110 automated tests (was 78 in V5.0), all passing — 32 new
+tests covering the analytics engine (including fake-timer-controlled
+revision-date math and a real 50k-resource performance check) and the
+new dashboard view.
+
+---
+
+## V5.0
 
 **Personal Learning Workspace**
 

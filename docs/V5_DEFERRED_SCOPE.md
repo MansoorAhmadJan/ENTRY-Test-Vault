@@ -81,6 +81,16 @@ mis-ordering. Estimated effort: 1–2 days once data is ready.
 **What it is:** "next resource," "related resources," "easier
 alternative," "advanced resource," "missing prerequisite" suggestions.
 
+**Update, V5.1:** a rule-based version now exists —
+`App.Analytics.getRecommendations()` in `js/analytics/analyticsEngine.js` —
+covering "continue learning," "next topic" (same-subject, unstarted,
+ranked by the data's own `priority` field), "suggested revision," and
+"missing prerequisite" wherever the sparse prerequisite data supports
+it (15/102 resources have `prerequisites` populated — the function
+reports its own coverage percentage rather than pretending otherwise).
+What's below now describes specifically the _learned/ML_ version,
+which remains deferred for the reason stated.
+
 **Why deferred:** with 102 hand-curated resources, you already know
 what's in the vault — you compiled it. A recommendation engine solves
 "I don't know what I don't know" at a scale where discovery is hard;

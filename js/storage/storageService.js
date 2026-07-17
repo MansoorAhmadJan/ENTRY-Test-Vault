@@ -27,6 +27,7 @@
     readingQueue: NS + "readingQueue", // [resourceId, ...] user-ordered
     goals: NS + "goals", // { dailyTarget, weeklyTarget } — resource-completion counts (V5.0)
     completionEvents: NS + "completionEvents", // [{ id, date: "YYYY-MM-DD" }, ...] — one per transition INTO "Completed" (V5.0)
+    activityLog: NS + "activityLog", // [{ type: "note"|"queue-add"|"queue-remove", id, date, ts }] — Timeline feed (V5.1)
   };
 
   function safeGet(key, fallback) {
@@ -213,6 +214,68 @@
     return streak;
   }
 
+  // ---------------- Activity log (V5.1 Timeline) ----------------
+  // NOTE on historical data: this log only records events from the moment
+  // V5.1 is installed onward. Notes/queue items that already existed
+  // before this version won't have a real creation date — there is no
+  // way to know it retroactively. The Timeline honestly starts "now",
+  // not pretending to have history it doesn't have.
+  const MAX_ACTIVITY_EVENTS = 2000;
+  function getActivityLog() {
+    return safeGet(KEYS.activityLog, []);
+  }
+  function recordActivity(type, id) {
+    let log = getActivityLog();
+    log.push({ type, id, date: todayStr(), ts: new Date().toISOString() });
+    if (log.length > MAX_ACTIVITY_EVENTS) log = log.slice(log.length - MAX_ACTIVITY_EVENTS);
+    safeSet(KEYS.activityLog, log);
+  }
+
+  // ---------------- Goal history & consistency (V5.1) ----------------
+  // IMPORTANT simplification, stated plainly: we do not store what the
+  // daily/weekly TARGET was on any past day — only the current target.
+  // "Was day X's goal met" is therefore computed by checking that day's
+  // real completion count against TODAY's target, retroactively. If you
+  // change your target, history recalculates under the new target rather
+  // than preserving what the old target was. This is a reasonable
+  // simplification (goal history isn't a compliance record), but it's
+  // real behavior worth knowing about, not hidden in a comment nobody reads.
+  function getGoalHistory(days) {
+    days = days || 30;
+    const target = getGoals().dailyTarget;
+    const out = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date = dateStrDaysAgo(i);
+      const completed = getCompletionsOnDate(date);
+      out.push({ date, completed, target, met: completed >= target });
+    }
+    return out;
+  }
+  function getGoalConsistency(days) {
+    const history = getGoalHistory(days || 30);
+    const metDays = history.filter((d) => d.met).length;
+    return {
+      metDays,
+      totalDays: history.length,
+      pct: history.length ? Math.round((metDays / history.length) * 100) : 0,
+      missedDays: history.filter((d) => !d.met).map((d) => d.date),
+    };
+  }
+  function getWeeklyConsistency(weeks) {
+    weeks = weeks || 4;
+    const target = getGoals().weeklyTarget;
+    const out = [];
+    for (let w = weeks - 1; w >= 0; w--) {
+      const endOffset = w * 7;
+      const events = getCompletionEvents();
+      const startDate = dateStrDaysAgo(endOffset + 6);
+      const endDate = dateStrDaysAgo(endOffset);
+      const completed = events.filter((e) => e.date >= startDate && e.date <= endDate).length;
+      out.push({ weekEnding: endDate, completed, target, met: completed >= target });
+    }
+    return out;
+  }
+
   // ---------------- Notes ----------------
   function getNotesMap() {
     return safeGet(KEYS.notes, {});
@@ -222,8 +285,10 @@
   }
   function setNote(id, text) {
     const map = getNotesMap();
-    if (text && text.trim()) map[id] = text;
-    else delete map[id];
+    if (text && text.trim()) {
+      map[id] = text;
+      recordActivity("note", id);
+    } else delete map[id];
     return safeSet(KEYS.notes, map);
   }
 
@@ -326,14 +391,17 @@
     if (!list.includes(id)) {
       list.push(id);
       safeSet(KEYS.readingQueue, list);
+      recordActivity("queue-add", id);
     }
     return true;
   }
   function removeFromQueue(id) {
+    const wasQueued = getReadingQueue().includes(id);
     safeSet(
       KEYS.readingQueue,
       getReadingQueue().filter((x) => x !== id)
     );
+    if (wasQueued) recordActivity("queue-remove", id);
     return false;
   }
   function toggleQueue(id) {
@@ -423,6 +491,11 @@
     getDailyGoalProgress,
     getWeeklyGoalProgress,
     getStudyStreak,
+    getActivityLog,
+    recordActivity,
+    getGoalHistory,
+    getGoalConsistency,
+    getWeeklyConsistency,
     exportAll,
     importAll,
     clearAll,
