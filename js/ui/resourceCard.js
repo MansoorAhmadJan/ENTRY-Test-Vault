@@ -59,8 +59,8 @@
       </div>
       <p class="rc-desc">${desc}</p>
       <div class="rc-meta">
-        <span class="badge ${App.Formatters.badgeClass(resource.difficulty)}">${resource.difficulty}</span>
-        <span class="badge ${App.Formatters.badgeClass(resource.verificationStatus)}">${resource.verificationStatus}</span>
+        <span class="badge ${App.Formatters.badgeClass(resource.difficulty)}">${App.Utils.escapeHtml(resource.difficulty)}</span>
+        <span class="badge ${App.Formatters.badgeClass(resource.verificationStatus)}">${App.Utils.escapeHtml(resource.verificationStatus)}</span>
         <span class="badge badge-outline">${App.Utils.escapeHtml(resource.subject)}</span>
         <span class="badge ${App.Formatters.badgeClass(status)}">${status}</span>
       </div>

@@ -47,9 +47,9 @@
           <p style="color:var(--text-secondary);font-size:14px;">${App.Utils.escapeHtml(resource.description)}</p>
 
           <div class="rc-meta" style="margin-top:var(--sp-4);">
-            <span class="badge ${App.Formatters.badgeClass(resource.difficulty)}">${resource.difficulty}</span>
-            <span class="badge ${App.Formatters.badgeClass(resource.quality)}">${resource.quality} quality</span>
-            <span class="badge ${App.Formatters.badgeClass(resource.verificationStatus)}">${resource.verificationStatus}</span>
+            <span class="badge ${App.Formatters.badgeClass(resource.difficulty)}">${App.Utils.escapeHtml(resource.difficulty)}</span>
+            <span class="badge ${App.Formatters.badgeClass(resource.quality)}">${App.Utils.escapeHtml(resource.quality)} quality</span>
+            <span class="badge ${App.Formatters.badgeClass(resource.verificationStatus)}">${App.Utils.escapeHtml(resource.verificationStatus)}</span>
             <span class="stars" role="img" aria-label="Priority ${resource.priority} of 5">${App.Formatters.starRating(resource.priority)}</span>
           </div>
 
@@ -118,9 +118,15 @@
             <button class="icon-toggle ${isFav ? "active" : ""}" id="modal-fav-btn" aria-pressed="${isFav}" aria-label="Toggle favorite" title="Toggle favorite">${App.Icons.get("heart")}</button>
             <button class="icon-toggle ${isBookmarked ? "active bookmark" : ""}" id="modal-bookmark-btn" aria-pressed="${isBookmarked}" aria-label="Toggle bookmark" title="Toggle bookmark">${App.Icons.get("bookmark")}</button>
           </div>
-          <a class="btn btn-primary" href="${resource.link}" target="_blank" rel="noopener noreferrer">
-            ${App.Icons.get("external")} Open Resource
-          </a>
+          ${
+            App.Validators.isValidUrl(resource.link)
+              ? `<a class="btn btn-primary" href="${App.Utils.escapeHtml(resource.link)}" target="_blank" rel="noopener noreferrer">
+                  ${App.Icons.get("external")} Open Resource
+                </a>`
+              : `<span class="btn btn-secondary" title="This resource's link failed validation (not a well-formed http/https URL) and has been disabled for safety." aria-disabled="true">
+                  ${App.Icons.get("external")} Link unavailable
+                </span>`
+          }
         </div>
       </div>
     `;

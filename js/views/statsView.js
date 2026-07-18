@@ -97,7 +97,7 @@
           (r) => `
         <div class="filter-bar" style="margin-bottom:var(--sp-2);">
           <span style="flex:1;font-size:13px;font-weight:600;cursor:pointer;" data-open="${r.id}">${App.Utils.escapeHtml(r.title)}</span>
-          <span class="badge ${App.Formatters.badgeClass(r.difficulty)}">${r.difficulty}</span>
+          <span class="badge ${App.Formatters.badgeClass(r.difficulty)}">${App.Utils.escapeHtml(r.difficulty)}</span>
         </div>`
         )
         .join("");

@@ -17,7 +17,7 @@
           <div style="font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${App.Utils.escapeHtml(resource.title)}</div>
           <div style="font-size:11.5px;color:var(--text-muted);">${resource.id} · ${App.Utils.escapeHtml(resource.university)} · ${App.Utils.escapeHtml(resource.subject)}</div>
         </div>
-        <span class="badge ${App.Formatters.badgeClass(resource.difficulty)}">${resource.difficulty}</span>
+        <span class="badge ${App.Formatters.badgeClass(resource.difficulty)}">${App.Utils.escapeHtml(resource.difficulty)}</span>
         <button class="icon-toggle" data-open="${resource.id}" aria-label="Open ${App.Utils.escapeHtml(resource.title)}">${App.Icons.get("external")}</button>
         <button class="icon-toggle" data-remove="${resource.id}" aria-label="Remove from queue">${App.Icons.get("x")}</button>
       </div>`;

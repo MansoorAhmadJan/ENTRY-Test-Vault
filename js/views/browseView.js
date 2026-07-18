@@ -38,7 +38,7 @@
           <div style="font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App.Utils.escapeHtml(r.title)}</div>
           <div style="font-size:11.5px;color:var(--text-muted);">${r.id} · ${App.Utils.escapeHtml(r.university)} · ${App.Utils.escapeHtml(r.subject)}</div>
         </div>
-        <span class="badge ${App.Formatters.badgeClass(r.difficulty)}">${r.difficulty}</span>
+        <span class="badge ${App.Formatters.badgeClass(r.difficulty)}">${App.Utils.escapeHtml(r.difficulty)}</span>
         <span class="badge ${App.Formatters.badgeClass(status)}">${status}</span>
         <span class="stars" role="img" aria-label="Priority ${r.priority} of 5" style="font-size:12px;">${App.Formatters.starRating(r.priority)}</span>
       </div>`;

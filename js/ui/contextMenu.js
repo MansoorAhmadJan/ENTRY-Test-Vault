@@ -77,7 +77,11 @@
         App.Components.openResourceModal(resource.id);
         break;
       case "open-new-tab":
-        window.open(resource.link, "_blank", "noopener,noreferrer");
+        if (App.Validators.isValidUrl(resource.link)) {
+          window.open(resource.link, "_blank", "noopener,noreferrer");
+        } else {
+          App.Toast.show("This resource's link isn't a valid http/https URL", "error");
+        }
         break;
       case "copy-link":
         App.ErrorHandler.safeCall("copy link", () => navigator.clipboard.writeText(resource.link));
