@@ -28,19 +28,29 @@
     const title = App.Search.highlight(resource.title, q);
     const desc = App.Search.highlight(App.Formatters.truncate(resource.description, 140), q);
 
+    // Accessibility note (found by the V5.2 axe-core audit, see docs/
+    // ACCESSIBILITY.md): this used to be an <article role="button"> with
+    // real <button> action buttons nested inside it. That's invalid ARIA
+    // two ways at once — role="button" isn't an allowed role for
+    // <article>, and a screen reader genuinely cannot present a button
+    // nested inside another interactive control. The fix is the standard
+    // "stretched button" pattern: only the title is a REAL <button>
+    // (keyboard/AT get correct native semantics for free), and CSS
+    // (.rc-open-btn::before, position:absolute;inset:0) makes its
+    // clickable AREA cover the whole card — so the click-anywhere-on-card
+    // UX is unchanged, but the DOM has no nested interactive elements.
     const card = App.Dom.el("article", {
       class: `resource-card ${resource.isCrossRef ? "is-xref" : ""}`,
       "data-id": resource.id,
-      tabindex: "0",
-      role: "button",
-      "aria-label": `Open ${resource.title}`,
     });
 
     card.innerHTML = `
       <div class="rc-top">
         <div>
-          <div class="rc-id">${resource.id} · ${App.Utils.escapeHtml(resource.university)}</div>
-          <h3 class="rc-title">${title}</h3>
+          <button class="rc-open-btn" data-action="open" aria-label="Open ${App.Utils.escapeHtml(resource.title)}">
+            <span class="rc-id">${resource.id} · ${App.Utils.escapeHtml(resource.university)}</span>
+            <span class="rc-title">${title}</span>
+          </button>
         </div>
       </div>
       <div class="rc-actions">
@@ -55,7 +65,7 @@
         <span class="badge ${App.Formatters.badgeClass(status)}">${status}</span>
       </div>
       <div class="rc-meta" style="margin-bottom:0;">
-        <span class="stars" aria-label="Priority ${resource.priority} of 5">${App.Formatters.starRating(resource.priority)}</span>
+        <span class="stars" role="img" aria-label="Priority ${resource.priority} of 5">${App.Formatters.starRating(resource.priority)}</span>
         <span class="badge badge-outline">${App.Utils.escapeHtml(resource.platform)}</span>
       </div>
     `;
@@ -68,17 +78,9 @@
    */
   function bindResourceCardEvents(container, callbacks) {
     callbacks = callbacks || {};
-    App.Dom.delegate(container, "click", ".resource-card", (cardEl, e) => {
-      if (e.target.closest("[data-action]")) return; // action buttons handle their own click below
-      const id = cardEl.getAttribute("data-id");
+    App.Dom.delegate(container, "click", "[data-action='open']", (btn) => {
+      const id = btn.closest(".resource-card").getAttribute("data-id");
       if (callbacks.onOpen) callbacks.onOpen(id);
-    });
-    App.Dom.delegate(container, "keydown", ".resource-card", (cardEl, e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        const id = cardEl.getAttribute("data-id");
-        if (callbacks.onOpen) callbacks.onOpen(id);
-      }
     });
     App.Dom.delegate(container, "click", "[data-action='toggle-favorite']", (btn, e) => {
       e.stopPropagation();

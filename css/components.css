@@ -145,6 +145,28 @@
   background: var(--c-amber-soft);
 }
 
+.resource-card .rc-open-btn {
+  all: unset;
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.resource-card .rc-open-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.resource-card .rc-open-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.resource-card .rc-actions {
+  z-index: 1;
+}
+
 .resource-card .rc-top {
   display: flex;
   align-items: flex-start;

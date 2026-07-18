@@ -50,7 +50,7 @@
             <span class="badge ${App.Formatters.badgeClass(resource.difficulty)}">${resource.difficulty}</span>
             <span class="badge ${App.Formatters.badgeClass(resource.quality)}">${resource.quality} quality</span>
             <span class="badge ${App.Formatters.badgeClass(resource.verificationStatus)}">${resource.verificationStatus}</span>
-            <span class="stars" aria-label="Priority ${resource.priority} of 5">${App.Formatters.starRating(resource.priority)}</span>
+            <span class="stars" role="img" aria-label="Priority ${resource.priority} of 5">${App.Formatters.starRating(resource.priority)}</span>
           </div>
 
           <div class="meta-table">

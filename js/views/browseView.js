@@ -40,7 +40,7 @@
         </div>
         <span class="badge ${App.Formatters.badgeClass(r.difficulty)}">${r.difficulty}</span>
         <span class="badge ${App.Formatters.badgeClass(status)}">${status}</span>
-        <span class="stars" style="font-size:12px;">${App.Formatters.starRating(r.priority)}</span>
+        <span class="stars" role="img" aria-label="Priority ${r.priority} of 5" style="font-size:12px;">${App.Formatters.starRating(r.priority)}</span>
       </div>`;
   }
 
