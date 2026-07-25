@@ -162,9 +162,38 @@
    * @param {string} query
    * @param {number} limit
    */
+  // ---------------- Search 3.0: natural-language query prep ----------------
+  // Deliberately NOT embedding-based semantic search (see
+  // docs/V5_DEFERRED_SCOPE.md item 9 and docs/AI_INTEGRATION.md) — this is
+  // a cheap, honest preprocessing step: strip conversational filler that
+  // would otherwise just become noise tokens (unmatched, diluting
+  // relevance) or coincidentally fuzzy-match something irrelevant.
+  const NL_FILLER_PATTERNS = [
+    /^(what|which|where)\s+(are|is|were|was)\s+(the|some|any)?\s*/i,
+    /^(show|find|get|give)\s+me\s+(the|some|any)?\s*/i,
+    /^(can|could)\s+you\s+(find|show|get)\s+(me\s+)?(the|some|any)?\s*/i,
+    /^i\s+(need|want|am looking for|m looking for)\s+(the|some|any)?\s*/i,
+    /^(find|search for|look up)\s+/i,
+  ];
+  function stripNaturalLanguageFiller(text) {
+    let out = text;
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const re of NL_FILLER_PATTERNS) {
+        const next = out.replace(re, "");
+        if (next !== out) {
+          out = next;
+          changed = true;
+        }
+      }
+    }
+    return out.replace(/[?!]+$/, "").trim() || text; // never return an empty string for an all-filler query
+  }
+
   function search(query, limit) {
     limit = limit || 50;
-    const q = (query || "").trim();
+    const q = stripNaturalLanguageFiller((query || "").trim());
     if (!q) return [];
 
     const qLower = q.toLowerCase();
@@ -307,7 +336,7 @@
    * used by search() itself, so the hint always matches actual behavior.
    */
   function getTopicMatch(query) {
-    const q = (query || "").trim().toLowerCase();
+    const q = stripNaturalLanguageFiller((query || "").trim()).toLowerCase();
     if (!q) return null;
     const qTokens = tokenize(q);
     const resolvedAliases = resolveAliasesInQuery(q, qTokens);
@@ -323,6 +352,7 @@
     highlight,
     resolveAlias,
     getTopicMatch,
+    stripNaturalLanguageFiller,
     tokenize,
     getSuggestions,
     getIndexHealth,

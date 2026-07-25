@@ -35,6 +35,7 @@ const browserGlobals = {
   URLSearchParams: "readonly",
   Blob: "readonly",
   FileReader: "readonly",
+  AbortController: "readonly",
   // Shared app namespace: every module writes to it, so it must be a
   // writable global rather than "readonly" or ESLint flags every module
   // boundary as a redeclaration.

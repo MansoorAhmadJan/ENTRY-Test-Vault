@@ -14,6 +14,7 @@
      #/goals                        -> daily/weekly study goals (V5.0)
      #/notes                        -> aggregate view of all your saved notes (V5.0)
      #/analytics                    -> Learning Analytics dashboard (V5.1)
+     #/ai-settings                  -> AI provider configuration (V5.3, opt-in)
      #/settings
      #/resource/:id                -> opens the resource modal over current view
    ============================================================ */
@@ -46,6 +47,7 @@
       case "goals":
       case "notes":
       case "analytics":
+      case "ai-settings":
         return { view, params: {} };
       default:
         return { view: "home", params: {} };

@@ -112,6 +112,36 @@ async function build() {
       `(${styles.length} files -> ${cssFileName})`
   );
 
+  // ---- Lazy-loaded AI modules (V5.3, Objective #8) ----
+  // These are NOT in index.html's <script> list (only js/ai/aiLoader.js
+  // is — see index.html's comment), so they're excluded from the main
+  // concatenation above by construction, not by a separate exclusion
+  // list that could drift. Minified individually and copied to the SAME
+  // relative paths js/ai/aiLoader.js's MODULE_FILES array expects.
+  const AI_LAZY_FILES = [
+    "js/ai/providerInterface.js",
+    "js/ai/providers/ollamaProvider.js",
+    "js/ai/providers/lmstudioProvider.js",
+    "js/ai/providers/openaiProvider.js",
+    "js/ai/providers/claudeProvider.js",
+    "js/ai/providers/geminiProvider.js",
+    "js/ai/promptLibrary.js",
+    "js/ai/aiService.js",
+    "js/ai/aiFeatures.js",
+  ];
+  for (const rel of AI_LAZY_FILES) {
+    const src = await readFile(path.join(ROOT, rel), "utf8");
+    const minified = await esbuild.transform(src, {
+      loader: "js",
+      minify: true,
+      target: ["es2018"],
+    });
+    const outPath = path.join(DIST, rel);
+    await mkdir(path.dirname(outPath), { recursive: true });
+    await writeFile(outPath, minified.code, "utf8");
+  }
+  log(`AI: ${AI_LAZY_FILES.length} lazy-loaded module(s) minified, NOT in the main bundle`);
+
   // ---- Runtime assets, copied verbatim ----
   const assetDirs = ["data", "icons"];
   for (const dir of assetDirs) {
@@ -156,7 +186,7 @@ async function build() {
   );
   distSw = distSw.replace(
     /(const APP_SHELL = \[[\s\S]*?\];)/,
-    `$1\nAPP_SHELL.push("./js/${jsFileName}");`
+    `$1\nAPP_SHELL.push("./js/${jsFileName}");\nAPP_SHELL.push(...${JSON.stringify(AI_LAZY_FILES.map((f) => "./" + f))});`
   );
   await writeFile(path.join(DIST, "sw.js"), distSw, "utf8");
 

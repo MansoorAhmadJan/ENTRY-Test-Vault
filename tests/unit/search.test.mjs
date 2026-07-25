@@ -125,3 +125,55 @@ describe("App.Search — Search 2.0: topic-aware boosting", () => {
     });
   });
 });
+
+describe("App.Search — Search 3.0: natural-language query preprocessing", () => {
+  beforeAll(async () => {
+    await bootApp(window);
+    window.App.Data.init();
+    window.App.Search.build();
+  });
+
+  it("strips common question phrasing before searching", () => {
+    expect(window.App.Search.stripNaturalLanguageFiller("what are the past papers")).toBe(
+      "past papers"
+    );
+    expect(window.App.Search.stripNaturalLanguageFiller("show me physics resources")).toBe(
+      "physics resources"
+    );
+    expect(window.App.Search.stripNaturalLanguageFiller("can you find giki notes")).toBe(
+      "giki notes"
+    );
+    expect(window.App.Search.stripNaturalLanguageFiller("i need chemistry books")).toBe(
+      "chemistry books"
+    );
+  });
+
+  it("strips a trailing question mark", () => {
+    expect(window.App.Search.stripNaturalLanguageFiller("what are past papers?")).toBe(
+      "past papers"
+    );
+  });
+
+  it("leaves an already-plain query unchanged", () => {
+    expect(window.App.Search.stripNaturalLanguageFiller("physics past papers")).toBe(
+      "physics past papers"
+    );
+  });
+
+  it("never reduces a query to an empty string, even if it's ALL filler", () => {
+    const result = window.App.Search.stripNaturalLanguageFiller("what is");
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it("a natural-language query returns the same results as its stripped equivalent", () => {
+    const natural = window.App.Search.search("what are the giki past papers", 20);
+    const stripped = window.App.Search.search("giki past papers", 20);
+    expect(natural.map((r) => r.id).sort()).toEqual(stripped.map((r) => r.id).sort());
+  });
+
+  it("a natural-language query resolves to the same topic hint as its stripped form", () => {
+    const natural = window.App.Search.getTopicMatch("what is physics");
+    const stripped = window.App.Search.getTopicMatch("physics");
+    expect(natural).toEqual(stripped);
+  });
+});

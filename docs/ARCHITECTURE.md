@@ -13,6 +13,15 @@
 > without losing any user data. See `CHANGELOG.md` for the full list of
 > what it computes and `js/analytics/analyticsEngine.js`'s own header
 > comment for the performance/scale design notes.
+>
+> **V5.3 note:** added `js/ai/` (AI Integration Layer) — see
+> `docs/AI_INTEGRATION.md` and `docs/PROVIDER_INTERFACE.md`. Only
+> `js/ai/aiLoader.js` is in the main bundle; the rest is lazy-loaded on
+> first real use and never costs anything for the majority of users who
+> leave AI disabled (the default). Everything else in this document is
+> unchanged by V5.3 — no existing module was modified to accommodate AI
+> beyond adding an optional "AI Tools" section to the resource modal and
+> two optional buttons in the Analytics view.
 
 ## Design goals, and how the architecture serves them
 
@@ -52,8 +61,9 @@ window.App = {
   Dom:          js/ui/dom.js                // el()/qs()/delegate() helpers (V4.2)
   Toast:        js/ui/toast.js              // notification component (V4.2)
   Components:   js/ui/{resourceCard,resourceModal,sidebar,header,breadcrumbs,filterPanel,shortcutsModal,commandPalette}.js
-  Views:        js/views/{home,browse,collection,queue,goals,notes,analytics,stats,diagnostics,settings}View.js
+  Views:        js/views/{home,browse,collection,queue,goals,notes,analytics,ai-settings,stats,diagnostics,settings}View.js
   Analytics:    js/analytics/analyticsEngine.js // pure aggregation over App.Data + App.Storage (V5.1)
+  AI:           js/ai/{aiLoader,providerInterface,promptLibrary,aiService,aiFeatures}.js + js/ai/providers/*.js // lazy-loaded, opt-in (V5.3)
   init:         js/app.js                   // bootstrap sequence, wires the above together
 }
 ```

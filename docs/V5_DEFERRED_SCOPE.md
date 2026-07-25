@@ -238,7 +238,17 @@ defined lifecycle hook) is worth doing once, not speculatively.
 
 ## 9. AI Integration Layer (local LLM / cloud API / RAG / embeddings / summaries)
 
-**Why deferred:** every one of these — local LLM inference, cloud API
+**Update, V5.3: this was built.** The reasoning below was presented
+again when V5.3 was requested, and explicitly overridden — the person
+said "I understand the tradeoff and want it anyway." What got built:
+5 real, verified provider adapters (Ollama, LM Studio, OpenAI, Claude,
+Gemini), a real service layer, real lazy-loading, and 6 working AI
+features. See `docs/AI_INTEGRATION.md` for what shipped. RAG and
+embedding-based semantic search specifically remain NOT built — that
+part of the original reasoning below still holds.
+
+**Original reasoning (why this was deferred through V5.0-5.2):**
+every one of these — local LLM inference, cloud API
 calls, RAG, embedding-based search — either needs a network call this
 offline-first app doesn't make today, or a model runtime this static
 dashboard doesn't have. Building "interfaces, not implementations" for

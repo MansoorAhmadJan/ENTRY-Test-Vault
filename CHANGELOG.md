@@ -1,6 +1,100 @@
 # Changelog
 
-## V5.1 (current)
+## V5.3 (current) — AI Integration Layer
+
+Built at explicit request after I recommended a smaller, single-provider
+scope and explained the tradeoff (see conversation/commit history) — the
+full 12-objective spec was built, real and tested, not stubbed.
+
+**AI Provider Abstraction** — 5 providers (Ollama, LM Studio, OpenAI,
+Claude, Gemini), each verified against real current API documentation
+(fetched live while building this, not assumed from memory). Providers
+are pure `buildRequest`/`parseResponse`/`parseError` functions — no
+`fetch()` inside them — which is what makes them unit-testable with zero
+network access and swappable without touching the service layer. See
+`docs/PROVIDER_INTERFACE.md`.
+
+**AI Service Layer** (`js/ai/aiService.js`) — provider selection, request
+orchestration, 30s timeout via `AbortController`, a 2-second client-side
+rate-limit guard (intentionally minimal — see `docs/AI_INTEGRATION.md`
+for why), an optional 10-minute in-memory response cache, and every
+failure mode normalized to `{ok, text, error}`. Verified against a
+genuinely closed local port (not a mock) — fails in ~150ms with a clear
+message.
+
+**AI Features** — Explain this resource, Generate study notes, Suggest
+related topics, and Ask a question (in the resource modal); Summarize
+and Suggest study order (in the Analytics view, operating on
+not-yet-completed resources).
+
+**Search 3.0** — natural-language query preprocessing (strips "what are
+the...", "show me...", etc. before tokenizing) layered on Search 2.0's
+existing alias/topic-aware matching. Explicitly NOT embedding-based
+semantic search, per the brief — see `docs/V5_DEFERRED_SCOPE.md` item 9.
+
+**Privacy (Objective #7)** — AI disabled by default; default provider
+(if enabled) is local (Ollama), not cloud. Personal notes are never sent
+to any AI feature except "Ask a question," and only with an explicit,
+unchecked-by-default opt-in checkbox — enforced structurally (other
+features' functions don't accept a notes parameter at all, not just a
+runtime check). API keys live in a separate storage key
+(`SENSITIVE_KEY_NAMES` in `storageService.js`) structurally excluded
+from `exportAll()` — verified with a test that plants a real-shaped key
+and confirms it's absent from the serialized export.
+
+**Performance (Objective #8)** — real lazy-loading, not just deferred
+bundling: only `js/ai/aiLoader.js` (a tiny stub) is in the main
+production bundle; the other 9 files load via dynamic `<script>`
+injection on first real use. Verified against a real HTTP server with
+real script execution that `App.AI.Service` genuinely doesn't exist
+until `ensureLoaded()` is called, and that the main bundle doesn't
+contain provider-specific code inline.
+
+**Security note found and fixed during this work:** AI-generated text is
+untrusted input, same as a user's note or an imported resource field —
+verified with a live-DOM test where a mocked AI response contains a
+`<script>` tag; it renders as escaped, inert text.
+
+**Testing:** 176 tests total (was 120), 56 new — provider conformance,
+service orchestration (mocked fetch), the real lazy-load mechanism
+(real server + real script execution), AI settings storage (especially
+the API-key export exclusion), the notes privacy opt-in, and Search 3.0.
+
+---
+
+## V5.2 — Engineering Quality
+
+_(Recorded now, after the fact — this entry should have been added when
+the work was committed; it wasn't, which is itself worth naming rather
+than quietly backfilling without a note.)_
+
+**CI/CD** — `.github/workflows/ci.yml`: lint, format check, test, build,
+smoke test on every push. Verified the gate is real (deliberately broke
+a lint rule and a test, confirmed both fail the build, confirmed the
+exit-code check itself wasn't silently broken by a pipe).
+
+**Accessibility audit** — `axe-core` against the real running app (4
+views). Found and fixed 4 real violations in `js/ui/resourceCard.js`
+(invalid ARIA role, nested interactive controls, a heading-order skip,
+`aria-label` on a non-interactive element) using the standard "stretched
+button" pattern — verified the click-anywhere-on-card UX was unchanged.
+See `docs/ACCESSIBILITY.md`.
+
+**Security review** — every one of 62 `innerHTML` sites checked, not
+sampled. Found and fixed: `resource.link` rendered into `href` with no
+escaping and no protocol enforcement at render time (a `javascript:`
+URL via Settings' vault-data import would have executed on click), and
+3 enum fields interpolated raw across 5 files. Verified fixes against a
+live DOM with script execution enabled, not string-matching. Also ran
+`npm audit` for the first time this project and fixed a moderate esbuild
+advisory. See `docs/SECURITY.md`.
+
+**Testing:** 120 tests total (was 78), including 2 new permanent suites
+(`tests/accessibility/`, `tests/security/`).
+
+---
+
+## V5.1
 
 **Learning Analytics** — new, self-contained module
 (`js/analytics/analyticsEngine.js`), a new `#/analytics` page

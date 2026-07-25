@@ -79,11 +79,15 @@
 
       <div class="section" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-5);">
         <div class="card">
-          <div class="section-title" style="margin-bottom:var(--sp-3);"><strong>Progress by Subject</strong></div>
+          <div class="section-title" style="margin-bottom:var(--sp-3);display:flex;align-items:center;gap:8px;">
+            <strong>Progress by Subject</strong>
+            <button class="btn btn-secondary" id="ai-summarize-btn" style="font-size:11px;padding:4px 8px;margin-left:auto;">${App.Icons.get("sparkle")} AI: Summarize</button>
+          </div>
           ${barChart(
             dash.subjects.map((s) => ({ label: `${s.subject} (${s.pct}%)`, value: s.completed })),
             Math.max(1, ...dash.subjects.map((s) => s.total))
           )}
+          <div id="ai-summarize-result" style="margin-top:var(--sp-3);"></div>
         </div>
         <div class="card">
           <div class="section-title" style="margin-bottom:var(--sp-3);"><strong>Progress by University</strong></div>
@@ -103,8 +107,12 @@
 
       <div class="section" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-5);">
         <div class="card">
-          <div class="section-title" style="margin-bottom:var(--sp-3);"><strong>Recommendations</strong></div>
+          <div class="section-title" style="margin-bottom:var(--sp-3);display:flex;align-items:center;gap:8px;">
+            <strong>Recommendations</strong>
+            <button class="btn btn-secondary" id="ai-study-order-btn" style="font-size:11px;padding:4px 8px;margin-left:auto;">${App.Icons.get("sparkle")} AI: Suggest study order</button>
+          </div>
           <div id="analytics-recs"></div>
+          <div id="ai-study-order-result"></div>
         </div>
         <div class="card">
           <div class="section-title" style="margin-bottom:var(--sp-3);"><strong>Resource Insights</strong></div>
@@ -240,6 +248,56 @@
       a.remove();
       URL.revokeObjectURL(url);
       App.Toast.show("Analytics report exported", "success");
+    });
+
+    async function runAiAction(resultEl, btn, fn) {
+      resultEl.innerHTML = `<p style="font-size:12px;color:var(--text-muted);">Thinking…</p>`;
+      btn.disabled = true;
+      try {
+        await App.AI.ensureLoaded();
+        if (!App.AI.Service.isConfigured()) {
+          resultEl.innerHTML = `<p style="font-size:12px;color:var(--text-muted);">AI isn't enabled/configured — see AI Settings.</p>`;
+          return;
+        }
+        const result = await fn();
+        resultEl.innerHTML = result.ok
+          ? `<div class="card" style="font-size:12.5px;white-space:pre-wrap;">${App.Utils.escapeHtml(result.text)}</div>`
+          : `<p style="font-size:12px;color:var(--c-red,#c62828);">${App.Utils.escapeHtml(result.error)}</p>`;
+      } catch (err) {
+        resultEl.innerHTML = `<p style="font-size:12px;color:var(--c-red,#c62828);">${App.Utils.escapeHtml(err.message)}</p>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    const summarizeBtn = container.querySelector("#ai-summarize-btn");
+    summarizeBtn.addEventListener("click", () => {
+      const resultEl = container.querySelector("#ai-summarize-result");
+      const incomplete = App.Data.getAll().filter(
+        (r) => App.Storage.getProgress(r.id) !== "Completed"
+      );
+      if (!incomplete.length) {
+        resultEl.innerHTML = `<p style="font-size:12px;color:var(--text-muted);">Everything's completed — nothing left to summarize.</p>`;
+        return;
+      }
+      runAiAction(resultEl, summarizeBtn, () =>
+        App.AI.Features.summarizeChapter(incomplete.slice(0, 15))
+      );
+    });
+
+    const studyOrderBtn = container.querySelector("#ai-study-order-btn");
+    studyOrderBtn.addEventListener("click", () => {
+      const resultEl = container.querySelector("#ai-study-order-result");
+      const pending = App.Data.getAll().filter(
+        (r) => App.Storage.getProgress(r.id) !== "Completed"
+      );
+      if (!pending.length) {
+        resultEl.innerHTML = `<p style="font-size:12px;color:var(--text-muted);">Nothing pending — everything's completed.</p>`;
+        return;
+      }
+      runAiAction(resultEl, studyOrderBtn, () =>
+        App.AI.Features.recommendStudySequence(pending.slice(0, 15))
+      );
     });
   }
 

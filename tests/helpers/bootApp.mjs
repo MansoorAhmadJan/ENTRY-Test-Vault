@@ -25,10 +25,35 @@ const ROOT = path.resolve(HERE, "..", "..");
 
 let cachedOrder = null;
 
+// AI modules are intentionally NOT in index.html's eager script list
+// (only js/ai/aiLoader.js is — see index.html's comment and
+// js/ai/aiLoader.js's header). For test purposes we load them directly
+// here via the same vm.runInContext mechanism as everything else, which
+// is simpler and faster than exercising the real dynamic <script>
+// injection path (that mechanism doesn't execute in vitest's default
+// jsdom environment anyway — it needs a real browser or
+// runScripts:"dangerously" + resources:"usable", which
+// tests/integration/aiLazyLoad.test.mjs uses specifically to verify the
+// REAL mechanism). Tests that care about lazy-loading itself, not just
+// AI logic, use that dedicated real-environment test instead of this
+// shortcut.
+const AI_MODULE_FILES = [
+  "js/ai/providerInterface.js",
+  "js/ai/providers/ollamaProvider.js",
+  "js/ai/providers/lmstudioProvider.js",
+  "js/ai/providers/openaiProvider.js",
+  "js/ai/providers/claudeProvider.js",
+  "js/ai/providers/geminiProvider.js",
+  "js/ai/promptLibrary.js",
+  "js/ai/aiService.js",
+  "js/ai/aiFeatures.js",
+];
+
 async function getOrder() {
   if (!cachedOrder) {
     const html = await readFile(path.join(ROOT, "index.html"), "utf8");
-    cachedOrder = extractAssetOrder(html);
+    const base = extractAssetOrder(html);
+    cachedOrder = { ...base, scripts: [...base.scripts, ...AI_MODULE_FILES] };
   }
   return cachedOrder;
 }

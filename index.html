@@ -71,6 +71,15 @@
     <script src="js/search/searchEngine.js"></script>
     <script src="js/search/filterEngine.js"></script>
     <script src="js/analytics/analyticsEngine.js"></script>
+
+    <!-- AI modules (V5.3, Objective #8: lazy-loaded). Only aiLoader.js is
+         in the main bundle — a tiny stub that dynamically injects the
+         other 9 files on first real use (opening AI Settings or clicking
+         an AI action), so the ~15-20KB of AI code never costs anything
+         for the majority of users who never enable it. See
+         js/ai/aiLoader.js and scripts/build.mjs's AI_DIR handling. -->
+    <script src="js/ai/aiLoader.js"></script>
+
     <script src="js/diagnostics/vaultDiagnostics.js"></script>
 
     <!-- 5. UI components (depend on utils/core/data engines above) -->
@@ -97,6 +106,7 @@
     <script src="js/views/goalsView.js"></script>
     <script src="js/views/notesView.js"></script>
     <script src="js/views/analyticsView.js"></script>
+    <script src="js/views/aiSettingsView.js"></script>
     <script src="js/views/statsView.js"></script>
     <script src="js/views/diagnosticsView.js"></script>
     <script src="js/views/settingsView.js"></script>

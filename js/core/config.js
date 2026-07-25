@@ -28,6 +28,7 @@
     { route: "stats", label: "Statistics", icon: "barChart", section: "Insights" },
     { route: "diagnostics", label: "Diagnostics", icon: "shield", section: "Insights" },
     { route: "settings", label: "Settings", icon: "settings", section: "System" },
+    { route: "ai-settings", label: "AI Settings", icon: "sparkle", section: "System" },
   ];
 
   const UNIVERSITY_NAV = [

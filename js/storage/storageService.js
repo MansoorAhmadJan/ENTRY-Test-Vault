@@ -28,7 +28,17 @@
     goals: NS + "goals", // { dailyTarget, weeklyTarget } — resource-completion counts (V5.0)
     completionEvents: NS + "completionEvents", // [{ id, date: "YYYY-MM-DD" }, ...] — one per transition INTO "Completed" (V5.0)
     activityLog: NS + "activityLog", // [{ type: "note"|"queue-add"|"queue-remove", id, date, ts }] — Timeline feed (V5.1)
+    aiSettings: NS + "aiSettings", // { enabled, activeProvider, endpoint, model, temperature, maxTokens, cacheEnabled } (V5.3)
+    aiApiKeys: NS + "aiApiKeys", // { [providerId]: apiKey } — SENSITIVE, see SENSITIVE_KEY_NAMES below (V5.3)
   };
+
+  // Keys that must NEVER be included in exportAll()'s output. An API key
+  // ending up inside a "backup" JSON file someone shares, uploads, or
+  // commits to a repo by accident is a real, common leak vector — this
+  // is enforced structurally (exportAll loops over KEYS but explicitly
+  // skips anything in this list) rather than trusted to be remembered at
+  // every call site that might someday touch export logic.
+  const SENSITIVE_KEY_NAMES = ["aiApiKeys"];
 
   function safeGet(key, fallback) {
     try {
@@ -212,6 +222,42 @@
       offset++;
     }
     return streak;
+  }
+
+  // ---------------- AI settings (V5.3) ----------------
+  const DEFAULT_AI_SETTINGS = {
+    enabled: false, // opt-in by default — Objective #7
+    activeProvider: "ollama", // local-first default, not a cloud provider
+    endpoint: "",
+    model: "",
+    temperature: 0.7,
+    maxTokens: 1024,
+    cacheEnabled: true,
+  };
+  function getAiSettings() {
+    return Object.assign({}, DEFAULT_AI_SETTINGS, safeGet(KEYS.aiSettings, {}));
+  }
+  function setAiSettings(partial) {
+    const merged = Object.assign({}, getAiSettings(), partial || {});
+    safeSet(KEYS.aiSettings, merged);
+    return merged;
+  }
+  // API keys are intentionally namespaced separately from the rest of AI
+  // settings — see SENSITIVE_KEY_NAMES above. Keeping them in their own
+  // storage key (rather than nested inside aiSettings) is what makes the
+  // exportAll() exclusion a single clean skip instead of having to
+  // selectively strip one field out of a larger object on every export.
+  function getAiApiKey(providerId) {
+    return safeGet(KEYS.aiApiKeys, {})[providerId] || "";
+  }
+  function setAiApiKey(providerId, key) {
+    const map = safeGet(KEYS.aiApiKeys, {});
+    if (key) map[providerId] = key;
+    else delete map[providerId];
+    return safeSet(KEYS.aiApiKeys, map);
+  }
+  function clearAiApiKeys() {
+    return safeSet(KEYS.aiApiKeys, {});
   }
 
   // ---------------- Activity log (V5.1 Timeline) ----------------
@@ -428,9 +474,11 @@
   function exportAll() {
     const out = {};
     Object.entries(KEYS).forEach(([name, key]) => {
+      if (SENSITIVE_KEY_NAMES.includes(name)) return; // never leak API keys into a shareable export
       out[name] = safeGet(key, null);
     });
     out._exportedAt = new Date().toISOString();
+    out._excludedForPrivacy = SENSITIVE_KEY_NAMES; // documents the omission IN the file, not just in code
     return out;
   }
   function importAll(payload) {
@@ -496,6 +544,11 @@
     getGoalHistory,
     getGoalConsistency,
     getWeeklyConsistency,
+    getAiSettings,
+    setAiSettings,
+    getAiApiKey,
+    setAiApiKey,
+    clearAiApiKeys,
     exportAll,
     importAll,
     clearAll,

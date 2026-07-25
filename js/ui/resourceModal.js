@@ -106,6 +106,14 @@
           </div>
 
           <div class="section" style="margin-top:var(--sp-4);margin-bottom:0;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <span class="meta-label">${App.Icons.get("sparkle")} AI Tools</span>
+              <span class="badge badge-outline" style="font-size:10px;">Optional</span>
+            </div>
+            <div id="ai-tools-panel"></div>
+          </div>
+
+          <div class="section" style="margin-top:var(--sp-4);margin-bottom:0;">
             <label class="meta-label" for="resource-note" style="display:block;margin-bottom:6px;">Your Notes</label>
             <textarea id="resource-note" class="notes-textarea" placeholder="Private notes, stored only on this device…">${App.Utils.escapeHtml(note)}</textarea>
           </div>
@@ -165,6 +173,104 @@
 
     App.Dom.qsa("[data-open-related]", overlayEl).forEach((btn) => {
       btn.addEventListener("click", () => open(btn.getAttribute("data-open-related")));
+    });
+
+    paintAiToolsPanel(overlayEl, resource);
+  }
+
+  const AI_FEATURE_BUTTONS = [
+    {
+      id: "explain-resource",
+      label: "Explain this",
+      fn: (r) => App.AI.Features.explainResource(r),
+    },
+    {
+      id: "generate-study-notes",
+      label: "Study notes",
+      fn: (r) => App.AI.Features.generateStudyNotes(r),
+    },
+    {
+      id: "suggest-related-topics",
+      label: "Related topics",
+      fn: (r) => App.AI.Features.suggestRelatedTopics(r),
+    },
+  ];
+
+  function paintAiToolsPanel(overlay, resource) {
+    const panel = App.Dom.qs("#ai-tools-panel", overlay);
+    const settings = App.Storage.getAiSettings();
+
+    if (!settings.enabled) {
+      panel.innerHTML = `<p style="font-size:12px;color:var(--text-muted);">AI is disabled. <a href="#ai-settings" data-goto-ai-settings>Enable it in AI Settings</a> to use these tools — everything else in the app works the same either way.</p>`;
+      App.Dom.qs("[data-goto-ai-settings]", panel)?.addEventListener("click", (e) => {
+        e.preventDefault();
+        App.Components.closeResourceModal();
+        App.Router.navigate("ai-settings");
+      });
+      return;
+    }
+
+    const hasNote = !!App.Storage.getNote(resource.id);
+    panel.innerHTML = `
+      <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-2);">
+        ${AI_FEATURE_BUTTONS.map((b) => `<button class="btn btn-secondary" style="font-size:12px;padding:6px 10px;" data-ai-action="${b.id}">${b.label}</button>`).join("")}
+      </div>
+      <div style="display:flex;gap:var(--sp-2);margin-bottom:6px;">
+        <input type="text" id="ai-question-input" placeholder="Ask a question about this resource…" style="flex:1;padding:6px 8px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-elevated);color:var(--text-primary);" />
+        <button class="btn btn-secondary" style="font-size:12px;padding:6px 10px;" id="ai-ask-btn">Ask</button>
+      </div>
+      ${
+        hasNote
+          ? `<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);margin-bottom:var(--sp-2);">
+              <input type="checkbox" id="ai-include-notes" /> Include my note on this resource (off by default)
+            </label>`
+          : ""
+      }
+      <div id="ai-tools-result"></div>
+    `;
+
+    const resultEl = App.Dom.qs("#ai-tools-result", panel);
+
+    async function runAiAction(fn) {
+      resultEl.innerHTML = `<p style="font-size:12px;color:var(--text-muted);">Thinking…</p>`;
+      try {
+        await App.AI.ensureLoaded();
+        if (!App.AI.Service.isConfigured()) {
+          resultEl.innerHTML = `<p style="font-size:12px;color:var(--text-muted);">AI is enabled but not fully configured (check provider/API key in AI Settings).</p>`;
+          return;
+        }
+        const result = await fn();
+        if (result.ok) {
+          // Escaped — this is AI-GENERATED text landing in the DOM, held
+          // to the exact same rule as every other free-text source in
+          // this app (notes, resource fields): never trust it unescaped.
+          resultEl.innerHTML = `<div class="card" style="font-size:13px;white-space:pre-wrap;">${App.Utils.escapeHtml(result.text)}</div>`;
+        } else {
+          resultEl.innerHTML = `<p style="font-size:12px;color:var(--c-red,#c62828);">${App.Utils.escapeHtml(result.error)}</p>`;
+        }
+      } catch (err) {
+        resultEl.innerHTML = `<p style="font-size:12px;color:var(--c-red,#c62828);">Something went wrong loading AI tools: ${App.Utils.escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    App.Dom.qsa("[data-ai-action]", panel).forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const action = AI_FEATURE_BUTTONS.find((b) => b.id === btn.getAttribute("data-ai-action"));
+        btn.disabled = true;
+        await runAiAction(() => action.fn(resource));
+        btn.disabled = false;
+      });
+    });
+
+    const askBtn = App.Dom.qs("#ai-ask-btn", panel);
+    askBtn.addEventListener("click", async () => {
+      const input = App.Dom.qs("#ai-question-input", panel);
+      const question = input.value.trim();
+      if (!question) return;
+      const includeNotes = !!App.Dom.qs("#ai-include-notes", panel)?.checked;
+      askBtn.disabled = true;
+      await runAiAction(() => App.AI.Features.answerQuestion(resource, question, { includeNotes }));
+      askBtn.disabled = false;
     });
   }
 
