@@ -44,6 +44,7 @@
           <button class="btn" id="import-backup-btn">${App.Icons.get("upload")} Import Backup</button>
           <input type="file" id="import-backup-input" accept="application/json" style="display:none;" />
         </div>
+        <div id="restore-options-panel"></div>
       </div>
 
       <div class="section card">
@@ -149,6 +150,24 @@
       reader.readAsText(file);
     });
 
+    const RESTORE_CATEGORIES = [
+      { label: "Study Progress", keys: ["progress", "completionEvents", "goals"] },
+      { label: "Favorites, Bookmarks & Queue", keys: ["favorites", "bookmarks", "readingQueue"] },
+      { label: "Notes", keys: ["notes"] },
+      {
+        label: "Search History & Saved Searches",
+        keys: ["searchHistory", "savedSearches", "filterPresets"],
+      },
+      {
+        label: "Activity Log & View History",
+        keys: ["activityLog", "viewCounts", "recentlyViewed"],
+      },
+      {
+        label: "Preferences (theme, AI settings, etc.)",
+        keys: ["theme", "contrast", "prefs", "aiSettings"],
+      },
+    ];
+
     const fileInput = container.querySelector("#import-backup-input");
     container
       .querySelector("#import-backup-btn")
@@ -158,11 +177,56 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
-        App.ErrorHandler.safeCall("import backup", () => {
+        App.ErrorHandler.safeCall("read backup file", () => {
           const payload = JSON.parse(reader.result);
-          App.Storage.importAll(payload);
-          App.Toast.show("Backup imported — reloading…", "success");
-          setTimeout(() => window.location.reload(), 900);
+          const compat = App.Storage.checkBackupCompatibility(payload);
+          const presentCategories = RESTORE_CATEGORIES.filter((c) =>
+            c.keys.some((k) => payload[k] !== undefined)
+          );
+
+          const panel = container.querySelector("#restore-options-panel");
+          panel.innerHTML = `
+            <div class="card" style="margin-top:var(--sp-3);">
+              ${
+                compat.warning
+                  ? `<p style="font-size:12.5px;color:var(--c-red,#c62828);margin-bottom:var(--sp-3);">⚠ ${App.Utils.escapeHtml(compat.warning)}</p>`
+                  : `<p style="font-size:12px;color:var(--text-muted);margin-bottom:var(--sp-3);">Backup version: ${App.Utils.escapeHtml(compat.exportedVersion)} (current: ${App.Utils.escapeHtml(compat.currentVersion)})</p>`
+              }
+              <div class="section-title" style="margin-bottom:var(--sp-2);font-size:12.5px;">Choose what to restore</div>
+              ${presentCategories
+                .map(
+                  (c, i) => `
+                <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:6px;">
+                  <input type="checkbox" checked data-restore-cat="${i}" />
+                  ${App.Utils.escapeHtml(c.label)}
+                </label>`
+                )
+                .join("")}
+              ${!presentCategories.length ? `<p style="font-size:12px;color:var(--text-muted);">This file doesn't contain any recognized categories.</p>` : ""}
+              <div class="filter-bar" style="margin-top:var(--sp-3);">
+                <button class="btn btn-primary" id="confirm-restore-btn" ${!presentCategories.length ? "disabled" : ""}>Restore Selected</button>
+                <button class="btn btn-secondary" id="cancel-restore-btn">Cancel</button>
+              </div>
+            </div>
+          `;
+
+          panel.querySelector("#confirm-restore-btn")?.addEventListener("click", () => {
+            const checked = App.Dom.qsa("[data-restore-cat]:checked", panel);
+            const onlyKeys = checked.flatMap(
+              (el) => presentCategories[+el.getAttribute("data-restore-cat")].keys
+            );
+            if (!onlyKeys.length) {
+              App.Toast.show("Select at least one category to restore", "error");
+              return;
+            }
+            App.Storage.importAll(payload, { onlyKeys });
+            App.Toast.show("Backup restored — reloading…", "success");
+            setTimeout(() => window.location.reload(), 900);
+          });
+          panel.querySelector("#cancel-restore-btn").addEventListener("click", () => {
+            panel.innerHTML = "";
+            fileInput.value = "";
+          });
         });
       };
       reader.onerror = () => App.Toast.show("Could not read that file", "error");

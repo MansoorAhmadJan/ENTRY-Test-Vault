@@ -118,4 +118,14 @@ describe("Accessibility audit (axe-core against the real app, V5.2)", () => {
     }
     expect(results.violations).toEqual([]);
   }, 15000);
+
+  it("diagnostics view, including the new AI & Storage tab (V5.4): zero violations", async () => {
+    const results = await runAxeOnRealApp((win) => {
+      win.App.Router.navigate("diagnostics");
+    });
+    if (results.violations.length) {
+      console.error(JSON.stringify(results.violations, null, 2));
+    }
+    expect(results.violations).toEqual([]);
+  }, 15000);
 });

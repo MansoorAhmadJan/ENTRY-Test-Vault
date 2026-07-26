@@ -479,11 +479,39 @@
     });
     out._exportedAt = new Date().toISOString();
     out._excludedForPrivacy = SENSITIVE_KEY_NAMES; // documents the omission IN the file, not just in code
+    out._appVersion = (App.BuildInfo && App.BuildInfo.version) || "unknown";
     return out;
   }
-  function importAll(payload) {
+
+  /**
+   * Compatibility is informational, not a hard gate — this app's storage
+   * schema has been purely additive version over version (no key has ever
+   * been removed or repurposed), so there's no known case where an old
+   * export would actually corrupt current state. This still surfaces a
+   * clear warning on a major-version gap, since "purely additive so far"
+   * is a fact about history, not a guarantee about the future.
+   */
+  function checkBackupCompatibility(payload) {
+    const exportedVersion = (payload && payload._appVersion) || "unknown";
+    const currentVersion = (App.BuildInfo && App.BuildInfo.version) || "unknown";
+    const exportedMajor = String(exportedVersion).match(/^(\d+)\./)?.[1];
+    const currentMajor = String(currentVersion).match(/^(\d+)\./)?.[1];
+    const majorMismatch = exportedMajor && currentMajor && exportedMajor !== currentMajor;
+    return {
+      exportedVersion,
+      currentVersion,
+      compatible: true, // see comment above — always allowed, this is a warning signal not a block
+      warning: majorMismatch
+        ? `This backup was made with v${exportedVersion}, which is a different major version than the current v${currentVersion}. It will likely still restore correctly (storage keys have only ever been added, never removed) — but review what you're restoring.`
+        : null,
+    };
+  }
+
+  function importAll(payload, options) {
     if (!payload || typeof payload !== "object") return false;
+    const onlyKeys = options && options.onlyKeys; // array of KEYS names, or undefined = restore everything present
     Object.entries(KEYS).forEach(([name, key]) => {
+      if (onlyKeys && !onlyKeys.includes(name)) return;
       if (payload[name] !== undefined) safeSet(key, payload[name]);
     });
     return true;
@@ -550,6 +578,7 @@
     setAiApiKey,
     clearAiApiKeys,
     exportAll,
+    checkBackupCompatibility,
     importAll,
     clearAll,
   };

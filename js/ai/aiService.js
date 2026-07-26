@@ -181,6 +181,17 @@
     cache.clear();
   }
 
+  function getCacheInfo() {
+    const now = Date.now();
+    let active = 0;
+    let expired = 0;
+    cache.forEach((entry) => {
+      if (entry.expiresAt > now) active++;
+      else expired++;
+    });
+    return { totalEntries: cache.size, activeEntries: active, expiredEntries: expired };
+  }
+
   async function testConnection(providerId, testConfig) {
     const provider = App.AI.getProvider(providerId);
     if (!provider) return { ok: false, error: "Unknown provider" };
@@ -188,5 +199,5 @@
     return callProvider(provider, messages, testConfig, 8000); // short timeout for a connection check
   }
 
-  App.AI.Service = { ask, isConfigured, getStatus, clearCache, testConnection };
+  App.AI.Service = { ask, isConfigured, getStatus, clearCache, getCacheInfo, testConnection };
 })((window.App = window.App || {}));

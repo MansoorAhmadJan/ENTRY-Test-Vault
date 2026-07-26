@@ -64,6 +64,7 @@ window.App = {
   Views:        js/views/{home,browse,collection,queue,goals,notes,analytics,ai-settings,stats,diagnostics,settings}View.js
   Analytics:    js/analytics/analyticsEngine.js // pure aggregation over App.Data + App.Storage (V5.1)
   AI:           js/ai/{aiLoader,providerInterface,promptLibrary,aiService,aiFeatures}.js + js/ai/providers/*.js // lazy-loaded, opt-in (V5.3)
+  BuildInfo:    js/core/buildInfo.js // dev placeholder, real values injected by scripts/build.mjs (V5.4)
   init:         js/app.js                   // bootstrap sequence, wires the above together
 }
 ```

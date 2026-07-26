@@ -159,6 +159,59 @@
     `;
   }
 
+  function renderAiAndStorage(container) {
+    const breakdown = App.Perf.getStorageBreakdown();
+    const quota = App.Perf.getStorageQuotaEstimate();
+    const build = App.BuildInfo;
+    const aiLoaded = App.AI.isLoaded();
+    const aiStatus = aiLoaded ? App.AI.Service.getStatus() : { enabled: false, configured: false };
+    const cacheInfo = aiLoaded ? App.AI.Service.getCacheInfo() : null;
+
+    container.innerHTML = `
+      <div class="card" style="margin-bottom:var(--sp-5);">
+        <div class="section-title" style="margin-bottom:var(--sp-3);"><strong>AI Provider Status</strong></div>
+        <div class="meta-table">
+          <div class="meta-item"><div class="meta-label">AI Modules Loaded</div><div class="meta-value">${aiLoaded ? "Yes (lazy-loaded on first use)" : "No — not yet used this session"}</div></div>
+          <div class="meta-item"><div class="meta-label">Enabled</div><div class="meta-value">${aiStatus.enabled ? "Yes" : "No"}</div></div>
+          <div class="meta-item"><div class="meta-label">Active Provider</div><div class="meta-value">${App.Utils.escapeHtml(aiStatus.providerLabel || "—")}</div></div>
+          <div class="meta-item"><div class="meta-label">Configured</div><div class="meta-value">${aiStatus.configured ? "Yes" : "No"}</div></div>
+          ${
+            cacheInfo
+              ? `<div class="meta-item"><div class="meta-label">Response Cache</div><div class="meta-value">${cacheInfo.activeEntries} active, ${cacheInfo.expiredEntries} expired (in-memory only, cleared on reload)</div></div>`
+              : ""
+          }
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--sp-5);">
+        <div class="section-title" style="margin-bottom:var(--sp-3);"><strong>Storage Usage</strong></div>
+        <div class="progress-bar" style="margin-bottom:var(--sp-2);"><div class="progress-bar-fill" style="width:${quota.pct}%"></div></div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:var(--sp-3);">${quota.usedKb} KB used of an estimated ~${(quota.limitKb / 1024).toFixed(0)} MB typical browser limit (${quota.pct}%) — actual limits vary by browser and aren't directly queryable, so this is a conservative estimate, not a guarantee.</p>
+        ${breakdown
+          .slice(0, 12)
+          .map(
+            (row) => `
+          <div class="filter-bar" style="margin-bottom:var(--sp-2);">
+            <span style="flex:1;font-size:12.5px;font-family:monospace;">${App.Utils.escapeHtml(row.key)}</span>
+            <span class="badge badge-outline">${row.kb} KB</span>
+          </div>`
+          )
+          .join("")}
+        ${breakdown.length === 0 ? `<p style="font-size:12px;color:var(--text-muted);">No data stored yet.</p>` : ""}
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-bottom:var(--sp-3);"><strong>Build Information</strong></div>
+        <div class="meta-table">
+          <div class="meta-item"><div class="meta-label">Version</div><div class="meta-value">${App.Utils.escapeHtml(build.version)}</div></div>
+          <div class="meta-item"><div class="meta-label">Mode</div><div class="meta-value">${App.Utils.escapeHtml(build.mode)}</div></div>
+          <div class="meta-item"><div class="meta-label">Built At</div><div class="meta-value">${build.builtAt ? App.Utils.escapeHtml(build.builtAt) : "—"}</div></div>
+          <div class="meta-item"><div class="meta-label">Commit</div><div class="meta-value">${build.commit ? App.Utils.escapeHtml(build.commit) : "—"}</div></div>
+        </div>
+      </div>
+    `;
+  }
+
   function render(container) {
     let activeTab = "integrity";
     const report = App.Diagnostics.run();
@@ -172,12 +225,14 @@
           <button class="tab-btn ${activeTab === "integrity" ? "active" : ""}" data-tab="integrity">Data Integrity</button>
           <button class="tab-btn ${activeTab === "performance" ? "active" : ""}" data-tab="performance">Performance</button>
           <button class="tab-btn ${activeTab === "system" ? "active" : ""}" data-tab="system">System Health</button>
+          <button class="tab-btn ${activeTab === "ai-storage" ? "active" : ""}" data-tab="ai-storage">AI &amp; Storage</button>
         </div>
         <div id="diagnostics-body"></div>
       `;
       const body = container.querySelector("#diagnostics-body");
       if (activeTab === "integrity") renderDataIntegrity(body, report);
       else if (activeTab === "performance") renderPerformance(body);
+      else if (activeTab === "ai-storage") renderAiAndStorage(body);
       else renderSystemHealth(body);
 
       container.querySelector("#rerun-diagnostics-btn").addEventListener("click", () => {

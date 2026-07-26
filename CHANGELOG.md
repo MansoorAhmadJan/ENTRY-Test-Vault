@@ -1,6 +1,60 @@
 # Changelog
 
-## V5.3 (current) — AI Integration Layer
+## V5.4-rc1 (current) — Platform Polish & Release Candidate
+
+**Scope note, stated upfront:** the original V5.4 brief included a
+First-Run Experience (welcome screen, guided tour, sample data) and UX
+consistency/animation polish. Both were deferred — the former for the
+same reason as prior rounds (no real second user needing onboarding);
+the latter because it needs to be driven by real friction found using
+the app, which still hasn't happened. Everything below is real,
+verified engineering work that doesn't depend on that.
+
+**Diagnostics (Objective #8)** — new "AI & Storage" tab: AI provider
+status (without forcing a lazy-load just to check it), a real per-key
+`localStorage` breakdown (not just a total), a storage-quota estimate,
+AI response cache stats, and real build information (version, commit
+hash, build timestamp) injected by `scripts/build.mjs` — verified
+against the actual production bundle, not asserted. Also fixed a real
+gap while building this: `package.json`'s version had been stuck at
+`4.4.0` since V4.4 despite five versions of real work since; bumped to
+`5.4.0-rc1`.
+
+**Backup & Restore (Objective #4)** — most of this already existed
+(`exportAll`/`importAll` since V4.x); what's genuinely new: a
+version-compatibility check on import (informational, not a hard
+block — this app's storage schema has been purely additive so far) and
+selective restore (choose which categories — Progress, Favorites/Queue,
+Notes, Search History, Activity Log, Preferences — to bring back,
+rather than all-or-nothing).
+
+**QA Audit (Objective #10)** — ran the existing data-integrity
+diagnostics (`js/diagnostics/vaultDiagnostics.js`, built in V5.2)
+against the real 102-resource dataset. First pass showed 102/102
+resources "failing" link validation — traced to a broken test harness
+missing the `URL` global (a bare `vm` context, not a real browser),
+not real data corruption. Re-ran correctly: **0 issues**, genuinely
+clean data.
+
+**Security/dependency hygiene** — ran `npm audit`, found 5 high-severity
+advisories (all in `eslint`'s dependency chain, dev-only, zero runtime
+exposure). Fixed via a major-version upgrade to eslint 10.x, verified
+lint still passes identically (same 6 pre-existing warnings, 0 errors)
+after the upgrade.
+
+**Final cleanup (Objective #11)** — checked every JS file against what's
+actually referenced from `index.html`/`aiLoader.js`/`build.mjs`/tests:
+zero orphaned files found.
+
+**Accessibility** — extended the existing axe-core audit to cover the
+Diagnostics view (previously untested), including the new AI & Storage
+tab. 0 violations across all 5 audited views.
+
+**Testing:** 201 tests total (was 176), 25 new.
+
+---
+
+## V5.3 — AI Integration Layer
 
 Built at explicit request after I recommended a smaller, single-provider
 scope and explained the tradeoff (see conversation/commit history) — the

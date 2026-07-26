@@ -29,6 +29,7 @@ import { readFile, writeFile, mkdir, rm, cp, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 import * as esbuild from "esbuild";
 import { extractAssetOrder } from "./lib/assetOrder.mjs";
 
@@ -48,11 +49,10 @@ function hashOf(buf) {
   return createHash("sha256").update(buf).digest("hex").slice(0, 10);
 }
 
-async function concatFiles(relPaths, joiner) {
+async function concatFiles(relPaths, joiner, sourcesMap) {
   const parts = [];
   for (const rel of relPaths) {
-    const full = path.join(ROOT, rel);
-    const content = await readFile(full, "utf8");
+    const content = sourcesMap ? sourcesMap.get(rel) : await readFile(path.join(ROOT, rel), "utf8");
     parts.push(`/* ---- ${rel} ---- */\n${content}`);
   }
   return parts.join(joiner);
@@ -75,8 +75,42 @@ async function build() {
   }
   log(`Found ${scripts.length} script(s) and ${styles.length} stylesheet(s) in index.html`);
 
+  // ---- Inject real build info (Objective #8: Diagnostics) before concatenating ----
+  // Rewrites js/core/buildInfo.js's dev-mode placeholder with the real
+  // version (already read below for the SW cache name), a real build
+  // timestamp, and the current git commit if this is a git checkout
+  // (falls back to null cleanly if not — e.g. a zip export with no .git).
+  let gitCommit = null;
+  try {
+    gitCommit = execSync("git rev-parse --short HEAD", {
+      cwd: ROOT,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+  } catch {
+    gitCommit = null;
+  }
+  const pkgVersion = JSON.parse(await readFile(path.join(ROOT, "package.json"), "utf8")).version;
+  const buildTimestamp = new Date().toISOString();
+  const scriptSources = new Map();
+  for (const rel of scripts) {
+    let src = await readFile(path.join(ROOT, rel), "utf8");
+    if (rel === "js/core/buildInfo.js") {
+      src = src.replace(
+        /App\.BuildInfo = \{[\s\S]*?\};/,
+        `App.BuildInfo = ${JSON.stringify(
+          { version: pkgVersion, builtAt: buildTimestamp, commit: gitCommit, mode: "production" },
+          null,
+          2
+        )};`
+      );
+    }
+    scriptSources.set(rel, src);
+  }
+
   // ---- JS bundle ----
-  const jsSourceConcat = await concatFiles(scripts, "\n\n");
+  const jsSourceConcat = await concatFiles(scripts, "\n\n", scriptSources);
   const jsSourceBytes = Buffer.byteLength(jsSourceConcat, "utf8");
   const jsResult = await esbuild.transform(jsSourceConcat, {
     loader: "js",
