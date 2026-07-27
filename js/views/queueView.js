@@ -70,6 +70,7 @@
     App.Dom.qsa("[data-remove]", listHost).forEach((btn) => {
       btn.addEventListener("click", () => {
         App.Storage.removeFromQueue(btn.getAttribute("data-remove"));
+        document.dispatchEvent(new CustomEvent("app:data-changed"));
         App.Toast.show("Removed from reading queue", "info");
         paint(container);
       });

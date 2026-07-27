@@ -90,6 +90,7 @@
       );
       btn.classList.toggle("active", nowActive);
       btn.setAttribute("aria-pressed", String(nowActive));
+      document.dispatchEvent(new CustomEvent("app:data-changed"));
       if (callbacks.onFavoriteToggle) callbacks.onFavoriteToggle(id, nowActive);
     });
     App.Dom.delegate(container, "click", "[data-action='toggle-bookmark']", (btn, e) => {
@@ -100,6 +101,7 @@
       );
       btn.classList.toggle("active", nowActive);
       btn.setAttribute("aria-pressed", String(nowActive));
+      document.dispatchEvent(new CustomEvent("app:data-changed"));
       if (callbacks.onBookmarkToggle) callbacks.onBookmarkToggle(id, nowActive);
     });
   }

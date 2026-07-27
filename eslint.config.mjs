@@ -48,6 +48,8 @@ const serviceWorkerGlobals = {
   fetch: "readonly",
   skipWaiting: "readonly",
   clients: "readonly",
+  Response: "readonly",
+  module: "readonly", // only used in a `typeof module !== "undefined"` guard for testability — harmless in the browser
 };
 
 export default [

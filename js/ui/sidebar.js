@@ -88,7 +88,7 @@
       </nav>
       <div class="sidebar-footer">
         <div style="font-size:11px;color:var(--text-muted);">
-          Vault v${App.Data.getMeta().sourceVersion} · Dashboard v${App.Config.APP_VERSION}
+          Vault v${App.Data.getMeta().sourceVersion} · Dashboard v${App.BuildInfo.version}
         </div>
       </div>
     `;

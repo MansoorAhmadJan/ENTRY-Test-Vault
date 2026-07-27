@@ -145,6 +145,19 @@
     App.Perf.mark("boot:firstRouteRendered");
     registerServiceWorkerIfSupported();
 
+    // V6.0 fix: sidebar nav-item badges (Favorites/Queue/etc. counts) only
+    // updated on navigation before this — toggling a favorite while
+    // staying on the same page left the sidebar showing a stale count
+    // until the next route change. Registered ONCE here (not inside
+    // renderSidebar, which runs on every navigation) so this doesn't
+    // accumulate duplicate listeners the way a per-render registration
+    // would.
+    document.addEventListener("app:data-changed", () => {
+      App.ErrorHandler.guard(document.getElementById("sidebar-root"), "sidebar", () =>
+        App.Components.renderSidebar(App.State.get().route)
+      );
+    });
+
     window.addEventListener("resize", () => {
       if (window.innerWidth > 900)
         document.querySelector(".app-shell").classList.remove("sidebar-open");

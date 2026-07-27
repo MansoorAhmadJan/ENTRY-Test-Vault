@@ -72,7 +72,7 @@
       <div class="section card">
         <div class="section-title" style="margin-bottom:var(--sp-3);"><strong>About</strong></div>
         <div class="meta-table">
-          <div class="meta-item"><div class="meta-label">Dashboard Version</div><div class="meta-value">${App.Config.APP_VERSION}</div></div>
+          <div class="meta-item"><div class="meta-label">Dashboard Version</div><div class="meta-value">${App.BuildInfo.version}${App.BuildInfo.commit ? ` (${App.BuildInfo.commit})` : ""}</div></div>
           <div class="meta-item"><div class="meta-label">Vault Version</div><div class="meta-value">${App.Data.getMeta().sourceVersion}</div></div>
           <div class="meta-item"><div class="meta-label">Data Generated</div><div class="meta-value">${App.Formatters.formatDate(App.Data.getMeta().generatedAt)}</div></div>
           <div class="meta-item"><div class="meta-label">Total Resources</div><div class="meta-value">${App.Data.count()}</div></div>

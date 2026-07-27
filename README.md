@@ -1,4 +1,4 @@
-# Entry-Test Knowledge Vault — Interactive Dashboard (V5.1)
+# Entry-Test Knowledge Vault — Interactive Dashboard (v6.0.0)
 
 <!-- Once this repo has a GitHub remote, replace OWNER/REPO below — the badge is a placeholder until then, not a live check. -->
 
@@ -6,9 +6,9 @@
 
 An offline, framework-free browsing interface for the Pakistan Entry-Test Knowledge Vault (Version 3.0). The Word/Excel documents remain the source of truth; this dashboard is a faster way to browse, search, filter, and track progress through the same data.
 
-**Current state (V5.1):** Browse/search/filter/queue/favorites/bookmarks (V4.1–V4.3), a real build+lint+format+test pipeline with 110 automated tests (V4.4), a Personal Learning Workspace — Study Goals, My Notes, alias-aware Search 2.0 (V5.0) — and a Learning Analytics dashboard covering progress, recommendations, revision tracking, and a timeline (V5.1). See `CHANGELOG.md` for the version-by-version detail and `docs/V5_DEFERRED_SCOPE.md` for what was deliberately not built and why.
+**v6.0.0 — Final Stable Release.** Browse/search/filter/queue/favorites/bookmarks, a real build+lint+format+test pipeline (209 automated tests), a Personal Learning Workspace (Study Goals, Notes, alias-aware Search 3.0 with natural-language query support), Learning Analytics, an optional AI Integration Layer (5 providers, off by default, lazy-loaded), and a full accessibility/security audit trail. See `RELEASE_NOTES.md` for this release specifically, `CHANGELOG.md` for the full version-by-version history, and `docs/V5_DEFERRED_SCOPE.md` for what was deliberately not built and why.
 
-Open `index.html` directly for the app — no build step required for local use (`npm run build` produces a minified `dist/` if you want a production bundle). See `docs/ARCHITECTURE.md` for what's built vs. what remains, and `docs/EXTENSIBILITY.md` for what's genuinely built vs. architecturally prepared for plugins/desktop/AI.
+Open `index.html` directly for the app — no build step required for local use (`npm run build` produces a minified `dist/` if you want a production bundle). See `docs/ARCHITECTURE.md` for the module map and design decisions, `docs/USER_GUIDE.md` for how to actually use it, and `docs/AI_INTEGRATION.md` for the AI layer specifically.
 
 ## Quick start
 
@@ -21,19 +21,24 @@ For development (linting, tests, production build):
 ```
 npm install
 npm run dev      # zero-build dev server
-npm test         # 110 tests, Vitest + jsdom
+npm test         # 209 tests, Vitest + jsdom
 npm run build    # minified dist/ output
 ```
 
 ## Documentation
 
 - **`CHANGELOG.md`** — what shipped in each version, and why
+- **`RELEASE_NOTES.md`** / **`RELEASE_REPORT.md`** — this release specifically: bugs fixed, real test/performance numbers, known limitations
+- **`docs/USER_GUIDE.md`** — how to actually use the app
 - **`docs/ARCHITECTURE.md`** — module map, dependency order, design decisions, milestone status, and what was actually tested (not just written)
-- **`docs/V5_DEFERRED_SCOPE.md`** — features deliberately deferred (Knowledge Graph, AI layer, etc.), each with a concrete trigger condition for revisiting
+- **`docs/AI_INTEGRATION.md`** / **`docs/PROVIDER_INTERFACE.md`** — the optional AI layer, how it works, what's verified
+- **`docs/SECURITY.md`** / **`docs/ACCESSIBILITY.md`** — audit findings and fixes
+- **`docs/V5_DEFERRED_SCOPE.md`** — features deliberately deferred (Knowledge Graph, ML recommendations, etc.), each with a concrete trigger condition for revisiting
 - **`docs/FOLDER_STRUCTURE.md`** — annotated tree of every file and why it's there
 - **`docs/INSTALLATION.md`** — running the dashboard and regenerating its data
-- **`docs/EXTENSIBILITY.md`** — plugin/service-layer/data-provider/PWA/desktop/AI hooks, explicit about what's built vs. prepared
+- **`docs/EXTENSIBILITY.md`** — plugin/service-layer/data-provider/PWA/desktop hooks, explicit about what's built vs. prepared
 - **`data/schema.md`** — exact shape of the data layer and how to import from other formats
+- **`CONTRIBUTING.md`** — if you want to build on this
 
 ## Design principles this build follows
 

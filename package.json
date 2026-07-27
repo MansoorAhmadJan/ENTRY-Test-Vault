@@ -1,6 +1,6 @@
 {
   "name": "entry-test-vault-dashboard",
-  "version": "5.4.0-rc1",
+  "version": "6.0.0",
   "private": true,
   "description": "Offline interactive dashboard for the Pakistan Entry-Test Knowledge Vault.",
   "type": "commonjs",

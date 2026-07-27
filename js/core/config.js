@@ -9,7 +9,12 @@
   "use strict";
 
   const APP_NAME = "Entry-Test Knowledge Vault";
-  const APP_VERSION = "4.2.0";
+  // APP_VERSION was removed in V6.0 — it was a hardcoded string that drifted
+  // stale (stuck at "4.2.0" since V4.3, silently wrong through 6+ months of
+  // real version history) and was displayed to users as the dashboard
+  // version. App.BuildInfo.version (js/core/buildInfo.js) is the single real
+  // source of truth now — it's populated from package.json at build time,
+  // so it can't drift the same way. See CHANGELOG.md's V6.0 entry.
   const SOURCE_VAULT_VERSION = "3.0";
 
   // Primary sidebar navigation. `route` matches App.Router views;
@@ -57,7 +62,6 @@
 
   App.Config = {
     APP_NAME,
-    APP_VERSION,
     SOURCE_VAULT_VERSION,
     NAV_ITEMS,
     UNIVERSITY_NAV,

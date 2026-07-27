@@ -1,6 +1,40 @@
 # Changelog
 
-## V5.4-rc1 (current) — Platform Polish & Release Candidate
+## V6.0.0 (current) — Final Stable Release
+
+Stabilization only, per this release's own brief — no new features, no
+architecture changes. Full detail in `RELEASE_NOTES.md` and
+`RELEASE_REPORT.md`; summary here.
+
+**Real bugs found and fixed:**
+
+1. Service worker offline fallback resolved to `undefined` (a hard
+   Fetch API error) instead of a graceful response on cache-miss +
+   network-failure. Now falls back to the cached app shell for
+   navigations, a real empty Response otherwise.
+2. Sidebar badge counts (Favorites/Queue) went stale without
+   navigating — toggling from a resource card or the Queue page never
+   notified the sidebar. Fixed with a single listener registered once
+   at boot (not per-render, avoiding a listener-accumulation class of
+   bug found earlier in this project).
+3. The app displayed the wrong version number in its own UI —
+   `APP_VERSION` had been hardcoded to `"4.2.0"` since V4.3, silently
+   wrong through 6+ versions. Removed in favor of `App.BuildInfo.version`
+   (the real source of truth since V5.4).
+
+**Release readiness:** `LICENSE` (MIT), `CONTRIBUTING.md`, and
+`docs/USER_GUIDE.md` added — none existed before. `RELEASE_NOTES.md`,
+`RELEASE_CHECKLIST.md`, `RELEASE_REPORT.md`, and `RELEASE_ASSETS.md`
+document what's real, what's verified, and what genuinely isn't
+(honestly — no real screenshots/GIFs/video were fabricated; see
+`RELEASE_ASSETS.md` for what this environment can and can't produce).
+
+**Testing:** 209 tests total (was 201), 8 new — all covering the 2 real
+bugs above.
+
+---
+
+## V5.4-rc1 — Platform Polish & Release Candidate
 
 **Scope note, stated upfront:** the original V5.4 brief included a
 First-Run Experience (welcome screen, guided tour, sample data) and UX
