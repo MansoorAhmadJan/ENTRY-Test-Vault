@@ -29,15 +29,17 @@
     completionEvents: NS + "completionEvents", // [{ id, date: "YYYY-MM-DD" }, ...] — one per transition INTO "Completed" (V5.0)
     activityLog: NS + "activityLog", // [{ type: "note"|"queue-add"|"queue-remove", id, date, ts }] — Timeline feed (V5.1)
     aiSettings: NS + "aiSettings", // { enabled, activeProvider, endpoint, model, temperature, maxTokens, cacheEnabled } (V5.3)
-    aiApiKeys: NS + "aiApiKeys", // { [providerId]: apiKey } — SENSITIVE, see SENSITIVE_KEY_NAMES below (V5.3)
+    aiApiKeys: NS + "aiApiKeys", // { [providerId]: apiKey } — SENSITIVE, lives in sessionStorage not localStorage (V6.0.1), see SENSITIVE_KEY_NAMES below
   };
 
-  // Keys that must NEVER be included in exportAll()'s output. An API key
-  // ending up inside a "backup" JSON file someone shares, uploads, or
-  // commits to a repo by accident is a real, common leak vector — this
-  // is enforced structurally (exportAll loops over KEYS but explicitly
-  // skips anything in this list) rather than trusted to be remembered at
-  // every call site that might someday touch export logic.
+  // Keys that must NEVER be included in exportAll()'s output, and that
+  // live in sessionStorage instead of localStorage. An API key ending up
+  // inside a "backup" JSON file someone shares, uploads, or commits to a
+  // repo by accident is a real, common leak vector — this is enforced
+  // structurally (exportAll loops over KEYS but explicitly skips anything
+  // in this list; clearAll routes these to sessionStorage.removeItem)
+  // rather than trusted to be remembered at every call site that might
+  // someday touch export/clear logic.
   const SENSITIVE_KEY_NAMES = ["aiApiKeys"];
 
   function safeGet(key, fallback) {
@@ -247,17 +249,42 @@
   // storage key (rather than nested inside aiSettings) is what makes the
   // exportAll() exclusion a single clean skip instead of having to
   // selectively strip one field out of a larger object on every export.
+  //
+  // API keys use sessionStorage, not localStorage — cleared when the tab
+  // closes rather than persisting indefinitely (V6.0.1). This doesn't stop
+  // an XSS payload from reading the key while the tab is open (nothing
+  // client-side-only can fully stop that — see docs/SECURITY.md), but it
+  // shrinks the exposure window from "forever" to "this session."
+  function safeGetSession(key, fallback) {
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (raw === null) return fallback;
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn("[storageService] failed to read", key, e);
+      return fallback;
+    }
+  }
+  function safeSetSession(key, value) {
+    try {
+      sessionStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      console.warn("[storageService] failed to write", key, e);
+      return false;
+    }
+  }
   function getAiApiKey(providerId) {
-    return safeGet(KEYS.aiApiKeys, {})[providerId] || "";
+    return safeGetSession(KEYS.aiApiKeys, {})[providerId] || "";
   }
   function setAiApiKey(providerId, key) {
-    const map = safeGet(KEYS.aiApiKeys, {});
+    const map = safeGetSession(KEYS.aiApiKeys, {});
     if (key) map[providerId] = key;
     else delete map[providerId];
-    return safeSet(KEYS.aiApiKeys, map);
+    return safeSetSession(KEYS.aiApiKeys, map);
   }
   function clearAiApiKeys() {
-    return safeSet(KEYS.aiApiKeys, {});
+    return safeSetSession(KEYS.aiApiKeys, {});
   }
 
   // ---------------- Activity log (V5.1 Timeline) ----------------
@@ -516,8 +543,20 @@
     });
     return true;
   }
+
+  // Routes each key to the storage it actually lives in: sensitive keys
+  // (currently just aiApiKeys) live in sessionStorage, everything else in
+  // localStorage. Uses the same SENSITIVE_KEY_NAMES list as exportAll()
+  // rather than a separate ad-hoc check, so the two stay in sync by
+  // construction if a future sensitive key is ever added.
   function clearAll() {
-    Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+    Object.entries(KEYS).forEach(([name, key]) => {
+      if (SENSITIVE_KEY_NAMES.includes(name)) {
+        sessionStorage.removeItem(key);
+      } else {
+        localStorage.removeItem(key);
+      }
+    });
   }
 
   App.Storage = {

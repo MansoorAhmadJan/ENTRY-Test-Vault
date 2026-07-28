@@ -82,6 +82,7 @@ pre-revert file).
   their own `localStorage` directly regardless of any in-app
   validation; this was never a security boundary (it's the user's own
   device/data) and isn't treated as one.
+
 - **Supply chain (npm dependencies)** — actually run, not just
   suggested: `npm audit` found one moderate advisory
   ([GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99)),
@@ -92,3 +93,34 @@ dev` uses `http-server`, not esbuild's — so the advisory's actual
   attack surface didn't exist in this codebase's usage. Upgraded
   anyway (`esbuild@latest`, a clean upgrade with no build breakage):
   `npm audit` now reports 0 vulnerabilities.
+
+## AI provider API keys — storage trade-off (V6.0.1)
+
+API keys entered in AI Settings are stored in `sessionStorage`, not
+`localStorage`. This is a different threat than the `localStorage`
+tampering point above. That one is about a user editing their own
+data on their own device — not a real security boundary. This one is
+about a third-party script (XSS) reading a secret and exfiltrating it
+somewhere the user never intended — a real boundary worth defending.
+
+No purely client-side, no-backend app can fully close that gap: any
+encryption scheme still needs its decryption key reachable by JS at
+runtime, which an XSS payload running in the same page can reach too.
+`sessionStorage` doesn't prevent theft while the tab is open — it
+reduces the exposure window from indefinite to "until the tab
+closes," and keys are excluded from `exportAll()` so they can't leak
+into a shared backup file either. `clearAll()` (Reset/Clear All Data)
+also explicitly wipes the `sessionStorage` copy, not just
+`localStorage` keys.
+
+Users who want zero client-side exposure of a cloud-provider key
+should use the local Ollama/LM Studio provider instead, which
+requires no key at all.
+
+A strict Content-Security-Policy (`default-src 'self'`, no
+`unsafe-inline`) is also in place as of V6.0.1, which mitigates the
+actual delivery mechanism (script injection) rather than protecting
+the secret after the fact. The one inline script this app previously
+had (the pre-paint theme-flash-prevention snippet in `index.html`)
+was externalized to `js/core/earlyTheme.js` specifically so it could
+keep running without weakening the CSP with `unsafe-inline`.

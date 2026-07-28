@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.anthropic.com https://api.openai.com https://generativelanguage.googleapis.com http://localhost:1234 http://localhost:11434;"
+    />
     <title>Entry-Test Knowledge Vault — Dashboard</title>
     <meta
       name="description"
@@ -19,24 +23,14 @@
     <link rel="stylesheet" href="css/responsive.css" />
 
     <!--
-    Inline, render-blocking, deliberately tiny: applies the saved
-    theme/contrast BEFORE first paint so there's no flash of the
+    Externalized (not inline) so it runs under a strict CSP without
+    'unsafe-inline'. Render-blocking, deliberately tiny: applies the
+    saved theme/contrast BEFORE first paint so there's no flash of the
     wrong theme. Everything else theme-related (js/core/themeManager.js)
     runs later, after the DOM exists, and re-applies the same values —
     this duplication is intentional, see themeManager.js's header comment.
   -->
-    <script>
-      (function () {
-        try {
-          var theme = localStorage.getItem("etv:theme") || "light";
-          var contrast = localStorage.getItem("etv:contrast") || "normal";
-          document.documentElement.setAttribute("data-theme", theme.replace(/"/g, ""));
-          document.documentElement.setAttribute("data-contrast", contrast.replace(/"/g, ""));
-        } catch (e) {
-          /* localStorage unavailable (e.g. privacy mode) — fall back to CSS defaults */
-        }
-      })();
-    </script>
+    <script src="js/core/earlyTheme.js"></script>
   </head>
   <body>
     <div id="app-root">
