@@ -8,6 +8,17 @@ An offline, framework-free browsing interface for the Pakistan Entry-Test Knowle
 
 **v6.0.0 — Final Stable Release.** Browse/search/filter/queue/favorites/bookmarks, a real build+lint+format+test pipeline (209 automated tests), a Personal Learning Workspace (Study Goals, Notes, alias-aware Search 3.0 with natural-language query support), Learning Analytics, an optional AI Integration Layer (5 providers, off by default, lazy-loaded), and a full accessibility/security audit trail. See `RELEASE_NOTES.md` for this release specifically, `CHANGELOG.md` for the full version-by-version history, and `docs/V5_DEFERRED_SCOPE.md` for what was deliberately not built and why.
 
+## 🎓 For Students
+
+New to the Entry-Test Vault?
+
+👉 **[Read the Student Guide](STUDENT-GUIDE.md)**
+
+The guide explains how to download, open, navigate, and use the Vault.
+
+
+
+
 Open `index.html` directly for the app — no build step required for local use (`npm run build` produces a minified `dist/` if you want a production bundle). See `docs/ARCHITECTURE.md` for the module map and design decisions, `docs/USER_GUIDE.md` for how to actually use it, and `docs/AI_INTEGRATION.md` for the AI layer specifically.
 
 ## Quick start
