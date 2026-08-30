@@ -1,0 +1,101 @@
+/* ============================================================
+   Responsive breakpoints.
+   Desktop: > 1200px (default styles above)
+   Laptop:  900px – 1200px
+   Tablet:  600px – 900px  (sidebar becomes an overlay drawer)
+   ============================================================ */
+
+@media (max-width: 1200px) {
+  .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  .resource-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --sidebar-width: 240px;
+  }
+
+  .app-shell {
+    grid-template-columns: 0 1fr;
+  }
+  .app-shell .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+    box-shadow: var(--shadow-lg);
+  }
+  .app-shell.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+  .app-shell.sidebar-open::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    z-index: 90;
+  }
+
+  .app-main {
+    padding: var(--sp-4);
+  }
+  .meta-table {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 0 var(--sp-3);
+    gap: var(--sp-2);
+  }
+  .header-search .kbd-hint {
+    display: none;
+  }
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
+  .bar-chart-label {
+    width: 90px;
+    font-size: 12px;
+  }
+  .shortcut-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal {
+    max-width: 100%;
+    border-radius: var(--radius-md);
+  }
+  .modal-overlay {
+    padding: var(--sp-2);
+  }
+}
+
+/* Print: hide chrome, show only the resource content cleanly */
+@media print {
+  .sidebar,
+  .app-header,
+  .filter-bar,
+  .rc-actions,
+  .modal-footer {
+    display: none !important;
+  }
+  .app-shell {
+    display: block;
+    height: auto;
+  }
+  .app-main {
+    overflow: visible;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "entry-test-vault-dashboard",
+  "version": "6.0.0",
+  "private": true,
+  "description": "Offline interactive dashboard for the Pakistan Entry-Test Knowledge Vault.",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "npx --yes http-server . -p 8080 -c-1",
+    "build": "node scripts/build.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "axe-core": "^4.12.1",
+    "esbuild": "^0.28.1",
+    "eslint": "^10.8.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.3.3",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,6 @@
+dist/
+node_modules/
+data/vault-data.js
+data/vault-data.json
+*.min.js
+*.min.css
