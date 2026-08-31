@@ -2,73 +2,103 @@
 
 [![CI](https://github.com/MansoorAhmadJan/ENTRY-Test-Vault/actions/workflows/ci.yml/badge.svg)](https://github.com/MansoorAhmadJan/ENTRY-Test-Vault/actions/workflows/ci.yml)
 
-An offline, framework-free browsing interface for the Pakistan Entry-Test Knowledge Vault (Version 3.0). The Word/Excel documents remain the source of truth; this dashboard is a faster way to browse, search, filter, and track progress through the same data.
+An offline, framework-free browsing interface for the Pakistan Entry-Test Knowledge Vault (Version 3.0). The Word/Excel documents remain the source of truth; this dashboard provides a faster way to browse, search, filter, and track progress through the same data.
 
-**v6.0.0 — Final Stable Release.** Browse/search/filter/queue/favorites/bookmarks, a real build+lint+format+test pipeline (209 automated tests), a Personal Learning Workspace (Study Goals, Notes, alias-aware Search 3.0 with natural-language query support), Learning Analytics, an optional AI Integration Layer (5 providers, off by default, lazy-loaded), and a full accessibility/security audit trail.
+**v6.0.0 — Final Stable Release.** Browse/search/filter/queue/favorites/bookmarks, a build + lint + format + test pipeline (209 automated tests), a Personal Learning Workspace (Study Goals, Notes, alias-aware Search 3.0 with natural-language query support), Learning Analytics, an optional AI Integration Layer (5 providers, off by default, lazy-loaded), and a full accessibility/security audit trail.
 
-See `RELEASE_NOTES.md` for this release specifically, `CHANGELOG.md` for the full version-by-version history, and `docs/V5_DEFERRED_SCOPE.md` for what was deliberately not built and why.
+See `RELEASE_NOTES.md` for this release, `CHANGELOG.md` for the full version-by-version history, and `docs/V5_DEFERRED_SCOPE.md` for features that were deliberately not built and why.
 
 ## 🎓 For Students
 
 New to the Entry-Test Vault?
 
-👉 **[Read the Student Guide](STUDENT-GUIDE.md)**
+👉 **[Read the Student Guide](studentGuide.md)**
 
 The guide explains how to download, open, navigate, and use the Vault.
 
-Open `index.html` directly for the app — no build step required for local use (`npm run build` produces a minified `dist/` if you want a production bundle).
+## Quick Start
 
-See `docs/ARCHITECTURE.md` for the module map and design decisions, `docs/USER_GUIDE.md` for how to use the application, and `docs/AI_INTEGRATION.md` for the AI layer specifically.
+### Run directly
 
-## Quick start
+Open `index.html` directly in a modern browser.
 
-```text
-Double-click index.html. No install, no server, no internet required.
-```
+No installation, server, or internet connection is required for the core offline dashboard.
 
-For development (linting, tests, and production build):
+### Development
+
+For linting, formatting, testing, and production builds:
 
 ```bash
 npm install
 npm run dev
-npm test         # 209 tests, Vitest + jsdom
-npm run build    # minified dist/ output
+npm test
+npm run lint
+npm run format:check
+npm run build
 ```
+
+`npm run dev` starts a local development server.
+
+`npm run build` produces the minified production output in `dist/`.
 
 ## Documentation
 
 * **`CHANGELOG.md`** — what shipped in each version, and why
-* **`RELEASE_NOTES.md`** / **`RELEASE_REPORT.md`** — this release specifically: bugs fixed, real test/performance numbers, and known limitations
+* **`RELEASE_NOTES.md`** / **`RELEASE_REPORT.md`** — v6.0.0 release details, bugs fixed, verification results, and known limitations
 * **`docs/USER_GUIDE.md`** — how to use the application
-* **`docs/ARCHITECTURE.md`** — module map, dependency order, design decisions, milestone status, and what was actually tested
-* **`docs/AI_INTEGRATION.md`** / **`docs/PROVIDER_INTERFACE.md`** — the optional AI layer, how it works, and what's verified
-* **`docs/SECURITY.md`** / **`docs/ACCESSIBILITY.md`** — audit findings and fixes
-* **`docs/V5_DEFERRED_SCOPE.md`** — features deliberately deferred, including Knowledge Graph and ML recommendations, with trigger conditions for revisiting them
-* **`docs/FOLDER_STRUCTURE.md`** — annotated tree of every file and why it's there
+* **`docs/ARCHITECTURE.md`** — module map, dependency order, design decisions, milestone status, and verification details
+* **`docs/AI_INTEGRATION.md`** / **`docs/PROVIDER_INTERFACE.md`** — the optional AI layer, provider architecture, and verification status
+* **`docs/SECURITY.md`** / **`docs/ACCESSIBILITY.md`** — security and accessibility findings and fixes
+* **`docs/V5_DEFERRED_SCOPE.md`** — deliberately deferred features and their trigger conditions
+* **`docs/FOLDER_STRUCTURE.md`** — annotated project file structure
 * **`docs/INSTALLATION.md`** — running the dashboard and regenerating its data
-* **`docs/EXTENSIBILITY.md`** — plugin/service-layer/data-provider/PWA/desktop hooks, with a distinction between what is built and what is prepared
-* **`data/schema.md`** — exact shape of the data layer and how to import from other formats
-* **`CONTRIBUTING.md`** — contribution and development information
+* **`docs/EXTENSIBILITY.md`** — extension points and distinctions between implemented and prepared functionality
+* **`data/schema.md`** — structure of the data layer and import format
+* **`CONTRIBUTING.md`** — development and contribution information
 
-## Design principles this build follows
+## Design Principles
 
-1. **The data layer is generated, never hand-written.** `data/vault-data.js` comes from `vault/build-vault-data.js`, which reads the actual Version 3.0 vault source. No resource content is hardcoded into HTML/JS.
+1. **The data layer is generated, never hand-written.** `data/vault-data.js` is generated by `vault/build-vault-data.js` from the Version 3.0 vault source. Resource content is not hardcoded directly into the HTML/JavaScript application code.
 
-2. **Every engine is called through a stable interface**, not accessed directly — `App.Data`, `App.Search`, `App.Filter`, `App.Storage`. This makes future integrations such as AI search or cloud synchronization more contained rather than requiring a complete rearchitecture.
+2. **Stable application interfaces.** Core functionality is accessed through interfaces such as `App.Data`, `App.Search`, `App.Filter`, and `App.Storage`, keeping future integrations more contained.
 
-3. **No framework**, because a build step contradicts "open the file and it works." Revisit only if the vault grows large enough that render performance genuinely requires it — see `docs/ARCHITECTURE.md` for the specific threshold to watch.
+3. **Framework-free architecture.** The application uses plain JavaScript and can be opened directly from `index.html`. A framework or more complex build architecture would only be reconsidered if future scale or performance requirements justify it.
 
-4. **User data (favorites, progress, notes) never lives in the data file.** It's entirely in `localStorage`, namespaced `etv:*`, so regenerating the vault data cannot silently erase tracked progress.
+4. **User data is separated from vault data.** Favorites, progress, and notes are stored in browser `localStorage` under the `etv:*` namespace, so regenerating the vault data does not silently erase tracked progress.
 
-5. **One component, many call sites.** `resourceCard.js` and `resourceModal.js` are each used from five+ different views instead of being re-implemented per page — see `docs/ARCHITECTURE.md` § V4.2 additions.
+5. **Reusable components.** Shared components such as `resourceCard.js` and `resourceModal.js` are reused across multiple views rather than being duplicated.
 
-6. **Errors degrade one panel, not the whole app.** Every view render goes through `App.ErrorHandler.guard()`; a broken resource or corrupted localStorage entry shows an inline error card in its own section instead of white-screening the dashboard.
+6. **Fault isolation.** View rendering uses `App.ErrorHandler.guard()` so that a failure in one resource or local-storage entry can be isolated to its relevant section instead of causing the entire dashboard to fail.
 
-## What's next
+## Current Status
 
-V4.5/V4.6 remain for a dedicated polish pass: loading skeletons, animation refinement, a broader accessibility audit, and cross-browser spot checks beyond the Chromium testing already done during V4.2.
+**v6.0.0 is the final stable release of the current development cycle.**
 
-See `docs/ARCHITECTURE.md`'s milestone table for the full breakdown.
+The release has been extensively tested at the code level, including:
+
+* 209 automated tests passing
+* 0 ESLint errors
+* 0 reported `npm audit` vulnerabilities
+* Accessibility testing across 5 audited views
+* Successful production build
+* Verification of the v6.0.0 bug fixes
+
+However, the release notes explicitly document that **real-world studying/use has not yet been validated**. The next meaningful step is to use the dashboard for actual study and let real-world feedback determine whether a future v6.1 release is warranted.
+
+See `RELEASE_NOTES.md` for the complete verification results and known limitations.
+
+## Deliberately Deferred
+
+The following features were intentionally not included in v6.0.0:
+
+* Knowledge Graph
+* ML/learned recommendation engine
+* Plugin SDK
+* RAG/embedding-based semantic search
+* Multi-language support
+* First-run onboarding
+
+Each deferred feature has a documented reason and trigger condition in `docs/V5_DEFERRED_SCOPE.md`.
 
 ## Author
 
