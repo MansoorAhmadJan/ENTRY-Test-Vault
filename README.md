@@ -63,3 +63,7 @@ npm run build    # minified dist/ output
 ## What's next
 
 V4.5/V4.6 remain for a dedicated polish pass: loading skeletons, animation refinement, a broader accessibility audit, and cross-browser spot checks beyond the Chromium testing already done during V4.2. See `docs/ARCHITECTURE.md`'s milestone table for the full breakdown.
+
+MIT License
+
+Copyright (c) 2026 Mansoor Ahmad Jan
