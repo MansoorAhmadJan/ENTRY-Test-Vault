@@ -78,7 +78,6 @@ export default [
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-
       globals: {
         ...browserGlobals,
         process: "readonly",
@@ -87,12 +86,11 @@ export default [
   },
 
   {
-    files: ["scripts/**/*.mjs"],
+    files: ["scripts/**/*.mjs", "eslint.config.mjs"],
 
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-
       globals: {
         process: "readonly",
         console: "readonly",
@@ -102,6 +100,7 @@ export default [
         setTimeout: "readonly",
         clearTimeout: "readonly",
         fetch: "readonly",
+        __dirname: "readonly",
       },
     },
   },
@@ -113,19 +112,6 @@ export default [
       ecmaVersion: "latest",
       sourceType: "script",
       globals: serviceWorkerGlobals,
-    },
-  },
-
-  {
-    files: ["eslint.config.mjs"],
-
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: {
-        process: "readonly",
-        console: "readonly",
-      },
     },
   },
 ];
