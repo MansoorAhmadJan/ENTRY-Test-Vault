@@ -45,7 +45,7 @@ export default [
   js.configs.recommended,
 
   {
-    files: ["js/**/*.js", "data/vault-data.js"],
+    files: ["js/**/*.js"],
 
     languageOptions: {
       ecmaVersion: 2021,
