@@ -1,66 +1,61 @@
 # Contributing
 
-This started as a personal study tool and grew into a portfolio-quality
-engineering project across V4.1–V6.0. It's built to be genuinely
-extensible if you want to build on it.
+The Entry-Test Knowledge Vault Interactive Dashboard is a proprietary project created and developed solely by **Mansoor Ahmad Jan**.
 
-## Before you start
+The source code, original design, documentation, and original project assets are not licensed for copying, modification, redistribution, or creation of derivative works without prior written permission from the copyright holder.
 
-Read `docs/ARCHITECTURE.md` first — it explains the actual architecture
-(global-namespace scripts, not ES modules or a bundler-based build) and
-why, plus the module map and dependency order. `docs/FOLDER_STRUCTURE.md`
-has an annotated file tree. `docs/V5_DEFERRED_SCOPE.md` documents
-features that were deliberately not built, and why — worth checking
-before proposing one of them.
+## What You Can Contribute
 
-## Setup
+You are welcome to:
 
-```
-npm install
-npm run dev       # zero-build dev server, raw source files
-npm test          # full test suite (Vitest + jsdom)
-npm run lint      # ESLint
-npm run format    # Prettier
-npm run build     # production dist/
-```
+* Report bugs
+* Report broken external links or incorrect resource metadata
+* Suggest improvements or new features
+* Provide feedback about usability, accessibility, or performance
+* Point out security issues responsibly
 
-## Ground rules
+Submitting an issue, suggestion, or other feedback does not grant permission to copy, modify, distribute, or create derivative works from this project.
 
-- **No ES modules, no bundler-based dev server.** The app is plain
-  global-namespace `<script>` tags by design (see `ARCHITECTURE.md`) —
-  it works by double-clicking `index.html`, no server required. Don't
-  introduce `import`/`export` syntax into `js/` files.
-- **Every module follows the same IIFE pattern**: `(function (App) {
-"use strict"; ... App.SomeModule = {...}; })((window.App = window.App
-|| {}));`. New files should match this.
-- **Write real tests, not assertions.** This project's whole engineering
-  practice has been "verify, don't assume" — every test in `tests/`
-  boots the real app source (see `tests/helpers/bootApp.mjs`) rather
-  than mocking it away. New features should follow the same pattern.
-- **Escape everything that reaches the DOM.** User input, AI-generated
-  text, and imported/untrusted resource data are all treated the same
-  way — see `docs/SECURITY.md` for the reasoning and the real bugs that
-  reasoning caught.
-- **Run the full gate before committing**: `npm run lint && npm run
-format:check && npm test && npm run build`. CI (`.github/workflows/
-ci.yml`) runs the same gate on every push.
+## Reporting Bugs
 
-## Adding a new AI provider
+When reporting a bug, include:
 
-See `docs/PROVIDER_INTERFACE.md` — it has a step-by-step guide and the
-exact contract to implement.
+* What you were doing
+* What you expected to happen
+* What actually happened
+* Browser and operating system, when relevant
+* Steps needed to reproduce the issue
+* Relevant console errors or screenshots, when available
 
-## Adding a new view/route
+For data-related problems such as incorrect metadata or broken resource links, consult `data/schema.md` for the expected data structure.
 
-Follow the pattern in any existing `js/views/*.js` file: a `render(container)`
-function wrapped in `App.ErrorHandler.guard`, registered on `App.Views.<name>`,
-plus a case in `js/core/router.js`'s switch and an entry in
-`js/core/config.js`'s `NAV_ITEMS` if it needs a sidebar link.
+## Security Issues
 
-## Reporting bugs
+Please do not publicly disclose sensitive security vulnerabilities before they can be reviewed.
 
-Open an issue with: what you did, what you expected, what actually
-happened, and (if relevant) which browser. If it's a data problem
-(wrong metadata, broken link), check `data/schema.md` for the expected
-shape first — `js/diagnostics/vaultDiagnostics.js` can catch a lot of
-these automatically (visible on the Diagnostics page in-app).
+For security-related issues, refer to `docs/SECURITY.md` and contact the project author privately where possible.
+
+## Development Information
+
+The following documentation describes the project's architecture and implementation for reference:
+
+* `docs/ARCHITECTURE.md`
+* `docs/FOLDER_STRUCTURE.md`
+* `docs/SECURITY.md`
+* `docs/ACCESSIBILITY.md`
+* `docs/EXTENSIBILITY.md`
+* `docs/V5_DEFERRED_SCOPE.md`
+
+These documents describe how the project works but do not grant permission to reproduce, modify, or redistribute the project's source code.
+
+## Third-Party Components
+
+Third-party libraries, frameworks, resources, and other external materials used by or referenced by this project remain subject to their respective licenses and terms.
+
+## Permission Requests
+
+Requests to use, reproduce, modify, distribute, or create derivative works from this project should be directed to the copyright holder.
+
+See `LICENSE` for the complete terms.
+
+Copyright © 2026 Mansoor Ahmad Jan. All rights reserved.
