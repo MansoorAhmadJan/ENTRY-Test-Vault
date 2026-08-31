@@ -1,6 +1,4 @@
 ```js
-// ESLint flat config (ESLint 9+).
-
 import js from "@eslint/js";
 
 const browserGlobals = {
@@ -47,7 +45,7 @@ export default [
   js.configs.recommended,
 
   {
-    files: ["dashboard/js/**/*.js", "js/**/*.js", "data/vault-data.js"],
+    files: ["js/**/*.js", "data/vault-data.js"],
 
     languageOptions: {
       ecmaVersion: 2021,
@@ -64,19 +62,10 @@ export default [
           varsIgnorePattern: "^_",
         },
       ],
-
       "no-undef": "error",
-
       eqeqeq: ["warn", "smart"],
-
       "no-console": "off",
-
-      "no-empty": [
-        "warn",
-        {
-          allowEmptyCatch: true,
-        },
-      ],
+      "no-empty": ["warn", { allowEmptyCatch: true }],
     },
   },
 
@@ -94,7 +83,7 @@ export default [
   },
 
   {
-    files: ["dashboard/sw.js", "sw.js"],
+    files: ["sw.js"],
 
     languageOptions: {
       ecmaVersion: 2021,
@@ -109,7 +98,6 @@ export default [
     languageOptions: {
       ecmaVersion: 2021,
       sourceType: "module",
-
       globals: {
         process: "readonly",
         console: "readonly",
