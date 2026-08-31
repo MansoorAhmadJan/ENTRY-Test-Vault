@@ -2,10 +2,10 @@
 
 Copyright © 2026 Mansoor Ahmad Jan.
 
-This project is licensed under the MIT License.
+This project is proprietary. All rights reserved.
 
-You are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software, subject to the conditions of the MIT License.
+The source code, original design, documentation, and original project assets may not be copied, reproduced, modified, distributed, published, sublicensed, sold, or otherwise used without prior written permission from the copyright holder.
 
-Third-party libraries, resources, or content included in or used by this project remain subject to their respective licenses and terms.
+Third-party libraries, frameworks, resources, or content included in or used by this project remain subject to their respective licenses and terms.
 
 See [`LICENSE`](LICENSE) for the complete terms.
