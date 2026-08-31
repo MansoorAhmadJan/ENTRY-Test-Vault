@@ -1,15 +1,9 @@
 import js from "@eslint/js";
 
 export default [
-  {
-    ignores: ["node_modules/**", "dist/**"],
-  },
-
   js.configs.recommended,
-
   {
     files: ["js/**/*.js"],
-
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "script",
@@ -38,20 +32,15 @@ export default [
         Blob: "readonly",
         FileReader: "readonly",
         AbortController: "readonly",
-        App: "writable",
-      },
-      parserOptions: {
-        ecmaVersion: "latest",
-      },
+        App: "writable"
+      }
     },
-
     rules: {
       "no-unused-vars": "off",
       "no-undef": "error",
-      "no-console": "off",
-    },
+      "no-console": "off"
+    }
   },
-
   {
     files: ["tests/**/*.mjs", "scripts/**/*.mjs"],
     languageOptions: {
@@ -62,11 +51,10 @@ export default [
         console: "readonly",
         Buffer: "readonly",
         window: "readonly",
-        document: "readonly",
-      },
-    },
+        document: "readonly"
+      }
+    }
   },
-
   {
     files: ["sw.js"],
     languageOptions: {
@@ -79,8 +67,8 @@ export default [
         skipWaiting: "readonly",
         clients: "readonly",
         Response: "readonly",
-        module: "readonly",
-      },
-    },
-  },
+        module: "readonly"
+      }
+    }
+  }
 ];
