@@ -1,15 +1,39 @@
-## License
+# Entry Test Vault
 
-Copyright © 2026 Mansoor Ahmad Jan.
+> A structured web platform for organizing and accessing university
+> entry-test preparation resources.
 
-This project is proprietary. All rights reserved.
+[![Live Demo](https://img.shields.io/badge/Live-Demo-blue)](YOUR_LIVE_LINK)
 
-The source code, original design, documentation, and original project assets
-may not be copied, reproduced, modified, distributed, published, sublicensed,
-sold, or otherwise used without prior written permission from the copyright
-holder.
+## Overview
 
-Third-party libraries, frameworks, resources, or content included in or used
-by this project remain subject to their respective licenses and terms.
+Entry Test Vault is a web-based resource platform designed to organize
+university entry-test preparation material in a structured and accessible
+way.
 
-See [`LICENSE`](LICENSE) for the complete terms.
+## Features
+
+- 📚 Organized educational resources
+- 🔎 Resource discovery and navigation
+- 📖 Subject/topic-based organization
+- 📱 Responsive interface
+- ⚡ Fast and lightweight frontend
+- 🧭 Structured resource categorization
+
+## Technologies
+
+- HTML5
+- CSS3
+- JavaScript
+
+
+## Project Structure
+
+```text
+css/        → Stylesheets
+data/       → Vault data and resources
+docs/       → Documentation
+icons/      → Project icons/assets
+js/         → Application JavaScript
+scripts/    → Utility/development scripts
+tests/      → Testing
