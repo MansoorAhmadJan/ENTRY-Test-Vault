@@ -22,11 +22,11 @@ architecture changes. Full detail in `RELEASE_NOTES.md` and
    wrong through 6+ versions. Removed in favor of `App.BuildInfo.version`
    (the real source of truth since V5.4).
 
-**Release readiness:** `LICENSE` (MIT), `CONTRIBUTING.md`, and
-`docs/USER_GUIDE.md` added — none existed before. `RELEASE_NOTES.md`,
-`RELEASE_CHECKLIST.md`, `RELEASE_REPORT.md`, and `RELEASE_ASSETS.md`
-document what's real, what's verified, and what genuinely isn't
-(honestly — no real screenshots/GIFs/video were fabricated; see
+**Release readiness:** `LICENSE`, `CONTRIBUTING.md`, and
+`docs/USER_GUIDE.md` are present and documented for the v6.0.0 release.
+`RELEASE_NOTES.md`, `RELEASE_CHECKLIST.md`, `RELEASE_REPORT.md`, and
+`RELEASE_ASSETS.md` document what's real, what's verified, and what genuinely
+isn't (honestly — no real screenshots/GIFs/video were fabricated; see
 `RELEASE_ASSETS.md` for what this environment can and can't produce).
 
 **Testing:** 209 tests total (was 201), 8 new — all covering the 2 real
@@ -144,9 +144,9 @@ verified with a live-DOM test where a mocked AI response contains a
 `<script>` tag; it renders as escaped, inert text.
 
 **Testing:** 176 tests total (was 120), 56 new — provider conformance,
-service orchestration (mocked fetch), the real lazy-load mechanism
-(real server + real script execution), AI settings storage (especially
-the API-key export exclusion), the notes privacy opt-in, and Search 3.0.
+service orchestration (mocked fetch), the real lazy-load mechanism (real
+server + real script execution), AI settings storage (especially the
+API-key export exclusion), the notes privacy opt-in, and Search 3.0.
 
 ---
 
@@ -162,11 +162,11 @@ a lint rule and a test, confirmed both fail the build, confirmed the
 exit-code check itself wasn't silently broken by a pipe).
 
 **Accessibility audit** — `axe-core` against the real running app (4
-views). Found and fixed 4 real violations in `js/ui/resourceCard.js`
-(invalid ARIA role, nested interactive controls, a heading-order skip,
-`aria-label` on a non-interactive element) using the standard "stretched
-button" pattern — verified the click-anywhere-on-card UX was unchanged.
-See `docs/ACCESSIBILITY.md`.
+views). Found and fixed 4 real violations in
+`js/ui/resourceCard.js` (invalid ARIA role, nested interactive controls,
+a heading-order skip, `aria-label` on a non-interactive element) using
+the standard "stretched button" pattern — verified the click-anywhere-
+on-card UX was unchanged. See `docs/ACCESSIBILITY.md`.
 
 **Security review** — every one of 62 `innerHTML` sites checked, not
 sampled. Found and fixed: `resource.link` rendered into `href` with no
@@ -201,8 +201,8 @@ advisory. See `docs/SECURITY.md`.
   for two of them.
 - **Learning Recommendations:** rule-based (continue / next-topic /
   revision / missing-prerequisite). See `docs/V5_DEFERRED_SCOPE.md` item
-  3 for why this is rule-based rather than learned, and why that's the
-  right call at 102 resources.
+  3 for why it's rule-based rather than learned, and why that's the right
+  call at 102 resources.
 - **Resource Insights:** frequently-revisited resources, average
   completion time (approximate, from parsed `estTime`).
 - **Goal Analytics:** daily/weekly consistency over the last 30
@@ -242,12 +242,13 @@ sums, never silently treated as 0 hours.
 
 **Performance (Objective #11):** verified, not just claimed — a test
 builds a synthetic 50,000-resource dataset and confirms the full
-dashboard aggregation completes in under 500ms (`tests/component/
-analyticsView.test.mjs`). The remaining real constraint at that scale
-is `localStorage`'s size ceiling, a storage-backend question, not an
-analytics-algorithm one — see `docs/V5_DEFERRED_SCOPE.md` item 10.
+dashboard aggregation completes in under 500ms
+(`tests/component/analyticsView.test.mjs`). The remaining real constraint
+at that scale is `localStorage`'s size ceiling, a storage-backend
+question, not an analytics-algorithm one — see
+`docs/V5_DEFERRED_SCOPE.md` item 10.
 
-**Testing:** 110 automated tests (was 78 in V5.0), all passing — 32 new
+**Testing:** 110 automated tests (was 78), all passing — 32 new
 tests covering the analytics engine (including fake-timer-controlled
 revision-date math and a real 50k-resource performance check) and the
 new dashboard view.
@@ -270,9 +271,9 @@ new dashboard view.
 **Search 2.0**
 
 - Alias resolution now works per-token and per-bigram, not just when the
-  entire query matches an alias exactly (e.g. "mechanics past papers" now
-  resolves the embedded alias "mechanics" -> "physics", where V4.4 only
-  matched if the query was _exactly_ "mechanics").
+  entire query matches an alias exactly (e.g. "mechanics past papers"
+  now resolves the embedded alias "mechanics" -> "physics", where V4.4
+  only matched if the query was _exactly_ "mechanics").
 - Topic-aware boosting: a query that names a real subject/university/
   category now pulls in every resource on that facet, even ones with zero
   literal text overlap (e.g. searching "mechanics" surfaces every Physics
