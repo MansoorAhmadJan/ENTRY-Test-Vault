@@ -3,8 +3,6 @@
 > A structured web platform for organizing and accessing university
 > entry-test preparation resources.
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-blue)](YOUR_LIVE_LINK)
-
 ## Overview
 
 Entry Test Vault is a web-based resource platform designed to organize
@@ -37,3 +35,4 @@ icons/      → Project icons/assets
 js/         → Application JavaScript
 scripts/    → Utility/development scripts
 tests/      → Testing
+```
